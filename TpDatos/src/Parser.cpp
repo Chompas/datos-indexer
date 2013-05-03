@@ -29,8 +29,7 @@ void string_a_minusculas(char* string) {
 /*
  * Recorre el archivo y va separando en tokens cada linea. Asigna los terminos al vector de terminos
  */
-void Parser::processFile(const char* path, int nro_doc,
-		list<TerminoRegister>* terminos) {
+void Parser::processFile(const char* path, int nro_doc, list<TerminoRegister>* terminos, int* memoriaUsada) {
 	string line;
 	ifstream fin;
 	fin.open(path);
@@ -38,15 +37,15 @@ void Parser::processFile(const char* path, int nro_doc,
 	while (!fin.eof()) {
 
 		getline(fin, line);
-		char* token = strtok((char*) line.c_str(), " ,.;~");
-		if(token!=NULL) string_a_minusculas(token);
+		char* token = strtok((char*) line.c_str(), " ,.;~{}[]+-_=?¿!¡/@#$%&¬()<>€çÇ");
+		if (token != NULL)
+			string_a_minusculas(token);
 		bool nuevo = true;
 		while (token != NULL) {
-			//Me fijo si el termino ya esta en el vector
-			for (list<TerminoRegister>::iterator it = terminos->begin();
-					it != terminos->end(); ++it) {
-				if (it->getTermino().compare(token) == 0
-						&& it->getDocumento() == nro_doc) {
+
+			//Me fijo si el termino ya esta en el vector y en el documento
+			for (list<TerminoRegister>::iterator it = terminos->begin(); it != terminos->end(); ++it) {
+				if (it->getTermino().compare(token) == 0 && it->getDocumento() == nro_doc) {
 					nuevo = false;
 					it->addFrecuencia();
 					it->addPosicion(posicion);
@@ -59,14 +58,34 @@ void Parser::processFile(const char* path, int nro_doc,
 				termino.setTermino(token);
 				termino.addPosicion(posicion);
 				terminos->push_back(termino);
+				(*memoriaUsada)++;
 			}
+
+			//Tomo el siguiente token
 			token = strtok(NULL, " ,.;~");
-			if(token!=NULL) string_a_minusculas(token);
+			if (token != NULL)
+				string_a_minusculas(token);
 			posicion++;
 			nuevo = true;
 		}
 	}
 	fin.close();
+}
+
+void imprimirArchivoParcial(list<TerminoRegister> terminos) {
+	cout << endl << "*****************Nuevo Doc Auxiliar*****************" << endl;
+	cout << "Termino\tDocumento\tFrecuencia\tPosiciones" << endl;
+	for (list<TerminoRegister>::iterator it = terminos.begin();
+			it != terminos.end(); ++it) {
+
+		cout << it->getTermino() << "\t" << it->getDocumento() << "\t"
+				<< it->getFrecuencia() << "\t";
+		for (list<int>::iterator pos = it->getPosiciones()->begin();
+				pos != it->getPosiciones()->end(); ++pos) {
+			cout << *pos << ",";
+		}
+		cout << endl;
+	}
 }
 
 /*
@@ -88,7 +107,9 @@ void Parser::recorrerDirectorio(string dir) {
 		return;
 	}
 
-	int nro_doc = 1;
+	int nro_doc = 0;
+	int memoriaMaxima = 32;
+	int memoriaUsada = 0;
 
 	while ((dirp = readdir(dp))) {
 		filepath = dir + "/" + dirp->d_name;
@@ -101,27 +122,25 @@ void Parser::recorrerDirectorio(string dir) {
 			continue;
 		}
 
-		cout << "Procesando " + filepath << endl;
-		this->processFile(filepath.c_str(), nro_doc, &terminos);
+		//TODO: Identificacion de los documentos a indexar: guardar y numerar documentos
 		nro_doc++;
-	}
-
-	//Ordeno el vector de terminos
-	terminos.sort(TerminoRegister::cmp);
-
-	//Bajo a disco los terminos (por ahora los imprimo en pantalla)
-	cout << "Termino\tDocumento\tFrecuencia\tPosiciones" << endl;
-	for (list<TerminoRegister>::iterator it = terminos.begin();
-			it != terminos.end(); ++it) {
-
-		cout << it->getTermino() << "\t" << it->getDocumento() << "\t"
-				<< it->getFrecuencia() << "\t";
-		for (list<int>::iterator pos = it->getPosiciones()->begin();
-				pos != it->getPosiciones()->end(); ++pos) {
-			cout << *pos << ",";
+		//TODO: comprobar si se lleno la memoria, de ser asi, bajo a disco
+		if(memoriaUsada >= memoriaMaxima) {
+			//Ordeno la lista de terminos
+			terminos.sort(TerminoRegister::cmp);
+			//guardarEnDisco(terminos);
+			imprimirArchivoParcial(terminos);
+			terminos.clear();
 		}
-		cout << endl;
+		cout << "Procesando " + filepath << endl;
+		this->processFile(filepath.c_str(), nro_doc, &terminos, &memoriaUsada);
+
 	}
+	// PARA EL ULTIMO
+	//Ordeno la lista de terminos
+	terminos.sort(TerminoRegister::cmp);
+	//guardarEnDisco(terminos);
+	imprimirArchivoParcial(terminos);
 
 	closedir(dp);
 }

@@ -28,8 +28,7 @@ private:
 	static Parser* instance;
 	Parser();
 	void recorrerDirectorio(string dir);
-	void processFile(const char* path, int nro_doc,
-			list<TerminoRegister>* terminos);
+	void processFile(const char* path, int nro_doc, list<TerminoRegister>* terminos, int* memoriaUsada);
 };
 
 #endif /* PARSER_H_ */

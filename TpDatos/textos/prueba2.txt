@@ -1,8 +1,6 @@
-In the 1960s, the dominant form of computing was on large mainframes—com-
-puters costing millions of dollars and stored in computer rooms with multiple
-operators overseeing their support. Typical applications included business data
-processing and large-scale scientific computing. The 1970s saw the birth of the
-minicomputer, a smaller-sized computer initially focused on applications in sci-
-entific hola que tal como te va
-iN
-In In jujuju
+Erase elements
+Removes from the list container either a single element (position) or a range of elements ([first,last)).
+
+This effectively reduces the container size by the number of elements removed, which are destroyed.
+
+Unlike other standard sequence containers, list and forward_list objects are specifically designed to be efficient inserting and removing elements in any position, even in the middle of the sequence.

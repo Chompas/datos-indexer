@@ -1,0 +1,2 @@
+Iterators specifying a range within the list] to be removed: [first,last). i.e., the range includes all the elements between first and last, including the element pointed by first but not the one pointed by last.
+Member types iterator and const_iterator are bidirectional iterator types that point to elements.

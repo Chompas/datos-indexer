@@ -4,6 +4,7 @@ using namespace std;
 
 void indexar(string nombre, string dir) {
 
+	//TODO: almacenamiento de repositorio
 	Parser* parser = Parser::getInstance();
 	parser->parsearDirectorio(dir);
 
