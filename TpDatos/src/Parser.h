@@ -29,7 +29,7 @@ private:
 	Parser();
 	void recorrerDirectorio(string dir);
 	void processFile(const char* path, int nro_doc,
-			vector<TerminoRegister>* terminos);
+			list<TerminoRegister>* terminos);
 };
 
 #endif /* PARSER_H_ */

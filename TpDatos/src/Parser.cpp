@@ -20,11 +20,17 @@ Parser* Parser::getInstance() {
 	return instance;
 }
 
+void string_a_minusculas(char* string) {
+	for (int i = 0; string[i] != '\0'; i++) {
+		string[i] = (char) tolower(string[i]);
+	}
+}
+
 /*
  * Recorre el archivo y va separando en tokens cada linea. Asigna los terminos al vector de terminos
  */
 void Parser::processFile(const char* path, int nro_doc,
-		vector<TerminoRegister>* terminos) {
+		list<TerminoRegister>* terminos) {
 	string line;
 	ifstream fin;
 	fin.open(path);
@@ -33,10 +39,11 @@ void Parser::processFile(const char* path, int nro_doc,
 
 		getline(fin, line);
 		char* token = strtok((char*) line.c_str(), " ,.;~");
+		if(token!=NULL) string_a_minusculas(token);
 		bool nuevo = true;
 		while (token != NULL) {
 			//Me fijo si el termino ya esta en el vector
-			for (vector<TerminoRegister>::iterator it = terminos->begin();
+			for (list<TerminoRegister>::iterator it = terminos->begin();
 					it != terminos->end(); ++it) {
 				if (it->getTermino().compare(token) == 0
 						&& it->getDocumento() == nro_doc) {
@@ -54,6 +61,7 @@ void Parser::processFile(const char* path, int nro_doc,
 				terminos->push_back(termino);
 			}
 			token = strtok(NULL, " ,.;~");
+			if(token!=NULL) string_a_minusculas(token);
 			posicion++;
 			nuevo = true;
 		}
@@ -71,7 +79,7 @@ void Parser::recorrerDirectorio(string dir) {
 	struct dirent *dirp;
 	struct stat filestat;
 
-	vector<TerminoRegister> terminos;
+	list<TerminoRegister> terminos;
 
 	dp = opendir(dir.c_str());
 
@@ -99,16 +107,16 @@ void Parser::recorrerDirectorio(string dir) {
 	}
 
 	//Ordeno el vector de terminos
-	sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);
+	terminos.sort(TerminoRegister::cmp);
 
 	//Bajo a disco los terminos (por ahora los imprimo en pantalla)
 	cout << "Termino\tDocumento\tFrecuencia\tPosiciones" << endl;
-	for (vector<TerminoRegister>::iterator it = terminos.begin();
+	for (list<TerminoRegister>::iterator it = terminos.begin();
 			it != terminos.end(); ++it) {
 
 		cout << it->getTermino() << "\t" << it->getDocumento() << "\t"
 				<< it->getFrecuencia() << "\t";
-		for (vector<int>::iterator pos = it->getPosiciones()->begin();
+		for (list<int>::iterator pos = it->getPosiciones()->begin();
 				pos != it->getPosiciones()->end(); ++pos) {
 			cout << *pos << ",";
 		}

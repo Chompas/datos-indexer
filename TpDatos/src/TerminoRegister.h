@@ -8,7 +8,7 @@
  */
 
 #include <string>
-#include <vector>
+#include <list>
 #include <iostream>
 using namespace std;
 
@@ -38,7 +38,7 @@ public:
 		this->frecuencia++;
 	}
 
-	vector<int>* getPosiciones() const {
+	list<int>* getPosiciones() const {
 		return posiciones;
 	}
 
@@ -58,7 +58,7 @@ private:
 	string termino;
 	int documento;
 	int frecuencia;
-	vector<int>* posiciones;
+	list<int>* posiciones;
 };
 
 #endif /* TERMINOREGISTER_H_ */
