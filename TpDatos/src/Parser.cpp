@@ -7,6 +7,10 @@
 
 #include "Parser.h"
 
+int MAX_MEM = 128;
+
+string separadores = " ,.;~{}[]+-_=?¿!¡/@#$%&¬()<>€çÇ";
+
 Parser* Parser::instance = 0;
 
 Parser::Parser() {
@@ -37,7 +41,7 @@ void Parser::processFile(const char* path, int nro_doc, list<TerminoRegister>* t
 	while (!fin.eof()) {
 
 		getline(fin, line);
-		char* token = strtok((char*) line.c_str(), " ,.;~{}[]+-_=?¿!¡/@#$%&¬()<>€çÇ");
+		char* token = strtok((char*) line.c_str(), separadores.c_str());
 		if (token != NULL)
 			string_a_minusculas(token);
 		bool nuevo = true;
@@ -62,7 +66,8 @@ void Parser::processFile(const char* path, int nro_doc, list<TerminoRegister>* t
 			}
 
 			//Tomo el siguiente token
-			token = strtok(NULL, " ,.;~");
+
+			token = strtok(NULL, separadores.c_str());
 			if (token != NULL)
 				string_a_minusculas(token);
 			posicion++;
@@ -74,15 +79,15 @@ void Parser::processFile(const char* path, int nro_doc, list<TerminoRegister>* t
 
 void imprimirArchivoParcial(list<TerminoRegister> terminos) {
 	cout << endl << "*****************Nuevo Doc Auxiliar*****************" << endl;
-	cout << "Termino\tDocumento\tFrecuencia\tPosiciones" << endl;
+	cout << "Termino-Documento-Frecuencia-Posiciones" << endl;
 	for (list<TerminoRegister>::iterator it = terminos.begin();
 			it != terminos.end(); ++it) {
 
-		cout << it->getTermino() << "\t" << it->getDocumento() << "\t"
-				<< it->getFrecuencia() << "\t";
+		cout << it->getTermino() << " - " << it->getDocumento() << " - "
+				<< it->getFrecuencia() << " - ";
 		for (list<int>::iterator pos = it->getPosiciones()->begin();
 				pos != it->getPosiciones()->end(); ++pos) {
-			cout << *pos << ",";
+			cout << *pos << " ";
 		}
 		cout << endl;
 	}
@@ -108,7 +113,6 @@ void Parser::recorrerDirectorio(string dir) {
 	}
 
 	int nro_doc = 0;
-	int memoriaMaxima = 32;
 	int memoriaUsada = 0;
 
 	while ((dirp = readdir(dp))) {
@@ -125,7 +129,7 @@ void Parser::recorrerDirectorio(string dir) {
 		//TODO: Identificacion de los documentos a indexar: guardar y numerar documentos
 		nro_doc++;
 		//TODO: comprobar si se lleno la memoria, de ser asi, bajo a disco
-		if(memoriaUsada >= memoriaMaxima) {
+		if(memoriaUsada >= MAX_MEM) {
 			//Ordeno la lista de terminos
 			terminos.sort(TerminoRegister::cmp);
 			//guardarEnDisco(terminos);
