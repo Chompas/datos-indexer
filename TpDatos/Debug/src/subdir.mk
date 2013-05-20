@@ -4,16 +4,19 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/Coder.cpp \
 ../src/Parser.cpp \
 ../src/TerminoRegister.cpp \
 ../src/TpDatos.cpp 
 
 OBJS += \
+./src/Coder.o \
 ./src/Parser.o \
 ./src/TerminoRegister.o \
 ./src/TpDatos.o 
 
 CPP_DEPS += \
+./src/Coder.d \
 ./src/Parser.d \
 ./src/TerminoRegister.d \
 ./src/TpDatos.d 
