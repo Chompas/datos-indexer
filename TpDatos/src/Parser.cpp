@@ -6,10 +6,11 @@
  */
 
 #include "Parser.h"
+#include <sstream>
 
-int MAX_MEM = 128;
+int MAX_MEM = 64;
 
-string separadores = " ,.;~{}[]+-_=?¿!¡/@#$%&¬()<>€çÇ";
+string separadores = " ,.;:~{}[]+-_=?¿!¡/@#$%&¬()<>€çÇ\t\n\"'±¹²³ºª·";
 
 Parser* Parser::instance = 0;
 
@@ -24,6 +25,12 @@ Parser* Parser::getInstance() {
 	return instance;
 }
 
+bool isNumber(string s) {
+	std::string::const_iterator it = s.begin();
+	while (it != s.end() && std::isdigit(*it))
+		++it;
+	return !s.empty() && it == s.end();
+}
 void string_a_minusculas(char* string) {
 	for (int i = 0; string[i] != '\0'; i++) {
 		string[i] = (char) tolower(string[i]);
@@ -33,7 +40,8 @@ void string_a_minusculas(char* string) {
 /*
  * Recorre el archivo y va separando en tokens cada linea. Asigna los terminos al vector de terminos
  */
-void Parser::processFile(const char* path, int nro_doc, list<TerminoRegister>* terminos, int* memoriaUsada) {
+void Parser::processFile(const char* path, int nro_doc,
+		list<TerminoRegister>* terminos, int* memoriaUsada) {
 	string line;
 	ifstream fin;
 	fin.open(path);
@@ -46,25 +54,27 @@ void Parser::processFile(const char* path, int nro_doc, list<TerminoRegister>* t
 			string_a_minusculas(token);
 		bool nuevo = true;
 		while (token != NULL) {
-
-			//Me fijo si el termino ya esta en el vector y en el documento
-			for (list<TerminoRegister>::iterator it = terminos->begin(); it != terminos->end(); ++it) {
-				if (it->getTermino().compare(token) == 0 && it->getDocumento() == nro_doc) {
-					nuevo = false;
-					it->addFrecuencia();
-					it->addPosicion(posicion);
+			if (!isNumber(token) && strlen(token) > 1) {
+				//Me fijo si el termino ya esta en el vector y en el documento
+				for (list<TerminoRegister>::iterator it = terminos->begin();
+						it != terminos->end(); ++it) {
+					if (it->getTermino().compare(token) == 0
+							&& it->getDocumento() == nro_doc) {
+						nuevo = false;
+						it->addFrecuencia();
+						it->addPosicion(posicion);
+					}
+				}
+				if (nuevo) {
+					TerminoRegister termino;
+					termino.setDocumento(nro_doc);
+					termino.addFrecuencia();
+					termino.setTermino(token);
+					termino.addPosicion(posicion);
+					terminos->push_back(termino);
+					(*memoriaUsada)++;
 				}
 			}
-			if (nuevo) {
-				TerminoRegister termino;
-				termino.setDocumento(nro_doc);
-				termino.addFrecuencia();
-				termino.setTermino(token);
-				termino.addPosicion(posicion);
-				terminos->push_back(termino);
-				(*memoriaUsada)++;
-			}
-
 			//Tomo el siguiente token
 
 			token = strtok(NULL, separadores.c_str());
@@ -78,7 +88,8 @@ void Parser::processFile(const char* path, int nro_doc, list<TerminoRegister>* t
 }
 
 void imprimirArchivoParcial(list<TerminoRegister> terminos) {
-	cout << endl << "*****************Nuevo Doc Auxiliar*****************" << endl;
+	cout << endl << "*****************Nuevo Doc Auxiliar*****************"
+			<< endl;
 	cout << "Termino-Documento-Frecuencia-Posiciones" << endl;
 	for (list<TerminoRegister>::iterator it = terminos.begin();
 			it != terminos.end(); ++it) {
@@ -129,7 +140,7 @@ void Parser::recorrerDirectorio(string dir) {
 		//TODO: Identificacion de los documentos a indexar: guardar y numerar documentos
 		nro_doc++;
 		//TODO: comprobar si se lleno la memoria, de ser asi, bajo a disco
-		if(memoriaUsada >= MAX_MEM) {
+		if (memoriaUsada >= MAX_MEM) {
 			//Ordeno la lista de terminos
 			terminos.sort(TerminoRegister::cmp);
 			//guardarEnDisco(terminos);
