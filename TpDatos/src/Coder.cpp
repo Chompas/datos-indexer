@@ -18,6 +18,10 @@ Coder::~Coder() {
 	// TODO Auto-generated destructor stub
 }
 
+string Coder::encode(int x){
+	return deltaCode(x);
+}
+
 string toString(int number) {
 	stringstream ss; //create a stringstream
 	ss << number; //add number to the stream

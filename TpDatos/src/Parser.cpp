@@ -56,10 +56,9 @@ void Parser::processFile(const char* path, int nro_doc,
 		while (token != NULL) {
 			if (!isNumber(token) && strlen(token) > 1) {
 				//Me fijo si el termino ya esta en el vector y en el documento
-				for (list<TerminoRegister>::iterator it = terminos->begin();
-						it != terminos->end(); ++it) {
-					if (it->getTermino().compare(token) == 0
-							&& it->getDocumento() == nro_doc) {
+				//TODO BUSQUEDA BINARIA
+				for (list<TerminoRegister>::iterator it = terminos->begin(); it != terminos->end(); ++it) {
+					if (it->getTermino().compare(token) == 0 && it->getDocumento() == nro_doc) {
 						nuevo = false;
 						it->addFrecuencia();
 						it->addPosicion(posicion);

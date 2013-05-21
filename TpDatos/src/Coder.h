@@ -17,6 +17,8 @@ class Coder {
 public:
 	Coder();
 	virtual ~Coder();
+	string encode(int x);
+private:
 	string deltaCode(int x);
 	string gammaCode(int x);
 	string unarioCode(int x);
