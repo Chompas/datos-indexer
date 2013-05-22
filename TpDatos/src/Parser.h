@@ -23,12 +23,13 @@ using namespace std;
 class Parser {
 public:
 	static Parser* getInstance();
-	void parsearDirectorio(string dir);
+	void parsearDirectorio(string dir, string repo_dir, ofstream &paths, ofstream &offsets);
 private:
 	static Parser* instance;
 	Parser();
-	void recorrerDirectorio(string dir);
-	void processFile(const char* path, int nro_doc, list<TerminoRegister>* terminos, int* memoriaUsada);
+	void recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets);
+	void processFile(const char* path, short nro_doc, list<TerminoRegister>* terminos, int* memoriaUsada);
+	void guardarDocumento(string filepath, short nro_doc, ofstream &paths, ofstream &offsets, long* offset);
 };
 
 #endif /* PARSER_H_ */

@@ -40,7 +40,7 @@ void string_a_minusculas(char* string) {
 /*
  * Recorre el archivo y va separando en tokens cada linea. Asigna los terminos al vector de terminos
  */
-void Parser::processFile(const char* path, int nro_doc,
+void Parser::processFile(const char* path, short nro_doc,
 		list<TerminoRegister>* terminos, int* memoriaUsada) {
 	string line;
 	ifstream fin;
@@ -106,8 +106,8 @@ void imprimirArchivoParcial(list<TerminoRegister> terminos) {
 /*
  * Recorre el directorio y procesa archivo por archivo del mismo
  */
-void Parser::recorrerDirectorio(string dir) {
-	ifstream fin;
+void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) {
+	ofstream docFile;
 	string filepath;
 	DIR *dp;
 	struct dirent *dirp;
@@ -122,8 +122,12 @@ void Parser::recorrerDirectorio(string dir) {
 		return;
 	}
 
-	int nro_doc = 0;
+	short nro_doc = 0;
 	int memoriaUsada = 0;
+	//Offset inicial: despues del header
+	long offset = sizeof(short)+dir.length();
+
+
 
 	while ((dirp = readdir(dp))) {
 		filepath = dir + "/" + dirp->d_name;
@@ -136,8 +140,9 @@ void Parser::recorrerDirectorio(string dir) {
 			continue;
 		}
 
-		//TODO: Identificacion de los documentos a indexar: guardar y numerar documentos
+		//Identificacion de los documentos a indexar: guarda y numera documentos
 		nro_doc++;
+		guardarDocumento(dirp->d_name,nro_doc,paths,offsets,&offset);
 		//TODO: comprobar si se lleno la memoria, de ser asi, bajo a disco
 		if (memoriaUsada >= MAX_MEM) {
 			//Ordeno la lista de terminos
@@ -159,6 +164,22 @@ void Parser::recorrerDirectorio(string dir) {
 	closedir(dp);
 }
 
-void Parser::parsearDirectorio(string dir) {
-	this->recorrerDirectorio(dir);
+void Parser::parsearDirectorio(string dir, string repo_dir, ofstream &paths, ofstream &offsets) {
+	this->recorrerDirectorio(dir,paths,offsets);
 }
+
+void Parser::guardarDocumento(string filepath, short nro_doc, ofstream &paths, ofstream &offsets, long* offset) {
+	//Formato de paths: nro (short) + #bytes(short) + path restante (variable)
+	paths.write((char*)&nro_doc,sizeof(nro_doc));
+	short numBytes = filepath.length();
+	paths.write((char*)&numBytes,sizeof(numBytes));
+	paths << filepath;
+
+	//Formato de offsets: nroDoc (short) + offset a paths (long)
+	offsets.write((char*)&nro_doc,sizeof(nro_doc));
+	offsets.write((char*)offset,sizeof(*offset));
+	//Se le suma al offset lo agregado en el archivo de paths
+	(*offset)+=sizeof(nro_doc)+sizeof(numBytes)+filepath.length();
+}
+
+

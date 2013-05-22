@@ -2,11 +2,45 @@
 #include "Parser.h"
 using namespace std;
 
+string dir_repositorios = "../Repositorios";
+string file_repositorios = "../Repositorios/repos.txt";
+string file_paths = "/paths.txt";
+string file_off = "/off.txt";
+
 void indexar(string nombre, string dir) {
 
 	//TODO: almacenamiento de repositorio
+
+	//Crea carpeta para repositorio
+	string repo_dir = dir_repositorios+"/"+nombre;
+	mkdir(repo_dir.c_str() , S_IRWXU | S_IRWXG | S_IRWXO);
+
+	//Agrega al archivo de repos
+	ofstream repos;
+	repos.open(file_repositorios.c_str(),ios::app | ios::binary);
+
+	//Formato: num de bytes (short) + nombre (variable)
+	short numBytes = nombre.length();
+	repos.write((char*)&numBytes,sizeof(numBytes));
+	repos << nombre;
+	repos.close();
+
+	//Creo archivo de documentos
+	ofstream paths((repo_dir+file_paths).c_str(),ios::app | ios::binary);
+	ofstream offsets((repo_dir+file_off).c_str(),ios::app | ios::binary);
+
+	//Agrego el header de paths: numBytes + path raiz
+	short numBytesRaiz = dir.length();
+	paths.write((char*)&numBytesRaiz,sizeof(numBytesRaiz));
+	paths << dir;
+
 	Parser* parser = Parser::getInstance();
-	parser->parsearDirectorio(dir);
+	parser->parsearDirectorio(dir,repo_dir,paths,offsets);
+
+	paths.close();
+	offsets.close();
+
+
 
 }
 
