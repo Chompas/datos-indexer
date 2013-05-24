@@ -21,7 +21,11 @@ private:
 	int docOffset;
 	int termOffset;
 	int lexicOffset;
+	string lastTerminoCompleto;
 	string toString(int number);
+	int cantPalabras;
+	void saveTerminoCompleto(Termino* termino,string repo_dir);
+	void saveLexico(Termino* termino, string repo_dir);
 
 };
 
