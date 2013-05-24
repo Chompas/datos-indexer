@@ -2,8 +2,9 @@
 #include "Parser.h"
 using namespace std;
 
-string dir_repositorios = "../Repositorios";
-string file_repositorios = "../Repositorios/repos.txt";
+// FALTA PONER ../ EN CADA UNO
+string dir_repositorios = "Repositorios";
+string file_repositorios = "Repositorios/repos.txt";
 string file_paths = "/paths.txt";
 string file_off = "/off.txt";
 
@@ -60,7 +61,7 @@ int main(int argc, char** argv) {
 		}*/
 	//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 	//	indexar(argv[2], argv[3]);
-	indexar("sadasda","textos");
+	indexar("sadasda","texto_prueba");
 /*
 	} else if (instruccion == "q") {
 		// Consulta

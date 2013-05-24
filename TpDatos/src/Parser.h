@@ -27,6 +27,7 @@ public:
 	void parsearDirectorio(string dir, string repo_dir, ofstream &paths, ofstream &offsets);
 private:
 	static Parser* instance;
+	string repo_dir;
 	Parser();
 	void recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets);
 	void processFile(const char* path, short nro_doc, list<TerminoRegister>* terminos, int* memoriaUsada);

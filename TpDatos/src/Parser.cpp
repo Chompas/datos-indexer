@@ -7,6 +7,7 @@
 
 #include "Parser.h"
 #include <sstream>
+#include "IndexManager.h"
 
 int MAX_MEM = 1024;
 
@@ -177,10 +178,9 @@ void Parser::guardarEnDisco(list<TerminoRegister> terminos){
 	for (iterator = terminos.begin(); iterator != terminos.end(); ++iterator) {
 
 		if(iterator->getTermino().compare(termino->palabra) != 0) {
-			//Pasar docs y posiciones a distancias
-			termino->convertIntoDistances();
-			//Guardar el termino en disco
+			// Proceso termino
 
+			IndexManager::getInstance()->indexTerm(termino,repo_dir);
 
 			//Aca va un delete?
 			termino = new Termino(iterator->getTermino());
@@ -192,12 +192,14 @@ void Parser::guardarEnDisco(list<TerminoRegister> terminos){
 
 	}
 
-	termino->convertIntoDistances();
+	//PROCESAR ULTIMO
+	IndexManager::getInstance()->indexTerm(termino,repo_dir);
 
 
 }
 
 void Parser::parsearDirectorio(string dir, string repo_dir, ofstream &paths, ofstream &offsets) {
+	this->repo_dir = repo_dir;
 	this->recorrerDirectorio(dir,paths,offsets);
 }
 

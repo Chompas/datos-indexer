@@ -37,6 +37,9 @@ void Termino::addPositionsForDoc(int doc, list<int>* positions) {
 void Termino::convertIntoDistances() {
 	std::list<int>::const_iterator iterator;
 	int anterior = 0;
+	this->distDocs = "";
+	// Le preconcatenamos la frecuencia de documentos en Delta
+	this->distDocs+=Coder::encode(docs.size());
 	for (iterator = docs.begin(); iterator != docs.end(); ++iterator) {
 
 		// DISTANCIAS EN ENTEROS
@@ -53,13 +56,14 @@ void Termino::convertIntoDistances() {
 	for (positionListIt = listaPosiciones.begin(); positionListIt != listaPosiciones.end(); ++positionListIt){
 		std::list<int>::const_iterator positionIt;
 		string posDeltaAux = "";
+		// Le preconcatenamos la frecuencia de cantidad de posiciones a cada lista de posiciones en DELTA
+		posDeltaAux+= Coder::encode(positionListIt->size());
 		for(positionIt = positionListIt->begin(); positionIt != positionListIt->end() ; ++positionIt){
 			posDeltaAux+= Coder::encode((*positionIt) - anterior);
-			cout << Coder::encode((*positionIt) - anterior) << endl;
 			anterior = *positionIt;
 		}
 		this->distPositions.push_back(posDeltaAux);
-
+		cout << posDeltaAux << endl;
 		posDeltaAux = "";
 		anterior = 0;
 
