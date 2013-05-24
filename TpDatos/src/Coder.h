@@ -17,12 +17,12 @@ class Coder {
 public:
 	Coder();
 	virtual ~Coder();
-	string encode(int x);
+	static string encode(int x);
 private:
-	string deltaCode(int x);
-	string gammaCode(int x);
-	string unarioCode(int x);
-	string binaryPart(int x);
+	static string deltaCode(int x);
+	static string gammaCode(int x);
+	static string unarioCode(int x);
+	static string binaryPart(int x);
 };
 
 #endif /* CODER_H_ */

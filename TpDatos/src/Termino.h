@@ -10,6 +10,7 @@
 
 #include <string>
 #include <list>
+#include "Coder.h"
 using namespace std;
 
 class Termino {
@@ -18,8 +19,13 @@ public:
 	virtual ~Termino();
 	string palabra;
 	list<int> docs;
-	list<list<int> > posiciones;
+	list<list<int> > listaPosiciones;
+	string distDocs;
+	list<string> distPositions;
 	void addPositionsForDoc(int doc, list<int>* positions);
+	void convertIntoDistances();
+private:
+	string toString(int number);
 
 
 };

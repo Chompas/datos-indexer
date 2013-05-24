@@ -147,8 +147,9 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 		if (memoriaUsada >= MAX_MEM) {
 			//Ordeno la lista de terminos
 			terminos.sort(TerminoRegister::cmp);
+
+			imprimirArchivoParcial(terminos);
 			guardarEnDisco(terminos);
-			//imprimirArchivoParcial(terminos);
 			terminos.clear();
 		}
 		cout << "Procesando " + filepath << endl;
@@ -158,8 +159,9 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 	// PARA EL ULTIMO
 	//Ordeno la lista de terminos
 	terminos.sort(TerminoRegister::cmp);
+
+	imprimirArchivoParcial(terminos);
 	guardarEnDisco(terminos);
-	//imprimirArchivoParcial(terminos);
 
 	closedir(dp);
 }
@@ -168,13 +170,15 @@ void Parser::guardarEnDisco(list<TerminoRegister> terminos){
 
 	std::list<TerminoRegister>::const_iterator iterator;
 
+	cout << "************GUARDADO EN DISCO*******************";
+
 	Termino* termino;
 	termino = new Termino(terminos.begin()->getTermino());
 	for (iterator = terminos.begin(); iterator != terminos.end(); ++iterator) {
 
 		if(iterator->getTermino().compare(termino->palabra) != 0) {
 			//Pasar docs y posiciones a distancias
-
+			termino->convertIntoDistances();
 			//Guardar el termino en disco
 
 
@@ -187,6 +191,10 @@ void Parser::guardarEnDisco(list<TerminoRegister> terminos){
 
 
 	}
+
+	termino->convertIntoDistances();
+
+
 }
 
 void Parser::parsearDirectorio(string dir, string repo_dir, ofstream &paths, ofstream &offsets) {
