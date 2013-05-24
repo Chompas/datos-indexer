@@ -8,7 +8,7 @@
 #include "Parser.h"
 #include <sstream>
 
-int MAX_MEM = 64;
+int MAX_MEM = 1024;
 
 string separadores = " ,.;:~{}[]+-_=?¿!¡/@#$%&¬()<>€çÇ\t\n\"'±¹²³ºª·";
 
@@ -147,8 +147,8 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 		if (memoriaUsada >= MAX_MEM) {
 			//Ordeno la lista de terminos
 			terminos.sort(TerminoRegister::cmp);
-			//guardarEnDisco(terminos);
-			imprimirArchivoParcial(terminos);
+			guardarEnDisco(terminos);
+			//imprimirArchivoParcial(terminos);
 			terminos.clear();
 		}
 		cout << "Procesando " + filepath << endl;
@@ -158,10 +158,35 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 	// PARA EL ULTIMO
 	//Ordeno la lista de terminos
 	terminos.sort(TerminoRegister::cmp);
-	//guardarEnDisco(terminos);
-	imprimirArchivoParcial(terminos);
+	guardarEnDisco(terminos);
+	//imprimirArchivoParcial(terminos);
 
 	closedir(dp);
+}
+
+void Parser::guardarEnDisco(list<TerminoRegister> terminos){
+
+	std::list<TerminoRegister>::const_iterator iterator;
+
+	Termino* termino;
+	termino = new Termino(terminos.begin()->getTermino());
+	for (iterator = terminos.begin(); iterator != terminos.end(); ++iterator) {
+
+		if(iterator->getTermino().compare(termino->palabra) != 0) {
+			//Pasar docs y posiciones a distancias
+
+			//Guardar el termino en disco
+
+
+			//Aca va un delete?
+			termino = new Termino(iterator->getTermino());
+		}
+
+		//Con el termino, proceso el numero de documento y las posiciones
+		termino->addPositionsForDoc(iterator->getDocumento(),iterator->getPosiciones());
+
+
+	}
 }
 
 void Parser::parsearDirectorio(string dir, string repo_dir, ofstream &paths, ofstream &offsets) {

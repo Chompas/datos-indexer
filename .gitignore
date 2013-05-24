@@ -17,5 +17,5 @@
 .metadata/*
 
 #Ejecutable
-Debug
-Debug/*
+TpDatos/Debug
+TpDatos/Debug/*

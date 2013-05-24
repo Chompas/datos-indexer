@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <algorithm>
 #include "TerminoRegister.h"
+#include "Termino.h"
 using namespace std;
 
 #ifndef PARSER_H_
@@ -30,6 +31,7 @@ private:
 	void recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets);
 	void processFile(const char* path, short nro_doc, list<TerminoRegister>* terminos, int* memoriaUsada);
 	void guardarDocumento(string filepath, short nro_doc, ofstream &paths, ofstream &offsets, long* offset);
+	void guardarEnDisco(list<TerminoRegister> terminos);
 };
 
 #endif /* PARSER_H_ */
