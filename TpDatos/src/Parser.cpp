@@ -149,7 +149,7 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 			//Ordeno la lista de terminos
 			terminos.sort(TerminoRegister::cmp);
 
-			imprimirArchivoParcial(terminos);
+			//imprimirArchivoParcial(terminos);
 			guardarEnDisco(terminos);
 			terminos.clear();
 		}
@@ -161,7 +161,7 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 	//Ordeno la lista de terminos
 	terminos.sort(TerminoRegister::cmp);
 
-	imprimirArchivoParcial(terminos);
+	//imprimirArchivoParcial(terminos);
 	guardarEnDisco(terminos);
 
 	closedir(dp);
@@ -194,6 +194,7 @@ void Parser::guardarEnDisco(list<TerminoRegister> terminos){
 
 	//PROCESAR ULTIMO
 	IndexManager::getInstance()->indexTerm(termino,repo_dir);
+	IndexManager::getInstance()->reset();
 
 
 }

@@ -15,6 +15,7 @@ public:
 	static IndexManager* getInstance();
 	virtual ~IndexManager();
 	void indexTerm(Termino* termino, string repo_dir);
+	void reset();
 private:
 	IndexManager();
 	static IndexManager* instance;

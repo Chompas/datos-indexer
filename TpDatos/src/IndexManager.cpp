@@ -7,15 +7,12 @@
 
 #include "IndexManager.h"
 #include "FileManager.h"
+#include "Defines.h"
 #include <sstream>
+#include <fstream>
 #include <iostream>
 
-#define kDOCUMENTOS 	"documentos"
-#define kTERMINOS		"terminosIdx"
-#define kLEXICO			"lexico"
-#define kLISTATERMINOS	"terminosLista"
 
-#define kNFRONTCODING	5
 
 
 IndexManager* IndexManager::instance = 0;
@@ -52,7 +49,22 @@ void IndexManager::saveTerminoCompleto(Termino* termino,string repo_dir) {
 								toString(termOffset) +
 								toString(lexicOffset) +
 								toString(docOffset);
-	FileManager::getInstance()->saveToFile(terminoCompleto,repo_dir+"/"+kTERMINOS);
+	//FileManager::getInstance()->saveToFile(terminoCompleto,repo_dir+"/"+kTERMINOS);
+
+	// *******************ESTO LO TENDRIA QUE HACER EL FILE MANAGER*****************************
+	short size;
+	size = termino->palabra.size(); // Transformo el size a short para que ocupe 2 bytes
+	ofstream out((repo_dir+"/"+kTERMINOS).c_str(),ios::binary | ios::app);
+	out.write((char*)&size,sizeof(size));
+	out.write((char*)&termOffset,sizeof(termOffset));
+	out.write((char*)&lexicOffset,sizeof(lexicOffset));
+	out.write((char*)&docOffset,sizeof(docOffset));
+	out.close();
+
+//	FileManager::getInstance()->saveToFile(size,repo_dir+"/"+kTERMINOS);
+//	FileManager::getInstance()->saveToFile(termOffset,repo_dir+"/"+kTERMINOS);
+//	FileManager::getInstance()->saveToFile(lexicOffset,repo_dir+"/"+kTERMINOS);
+//	FileManager::getInstance()->saveToFile(docOffset,repo_dir+"/"+kTERMINOS);
 
 	FileManager::getInstance()->saveToFile(termino->palabra,repo_dir+"/"+kLISTATERMINOS);
 
@@ -62,7 +74,7 @@ void IndexManager::saveTerminoCompleto(Termino* termino,string repo_dir) {
 
 void IndexManager::saveLexico(Termino* termino, string repo_dir) {
 	bool distintos = false;
-	unsigned int iguales = 0;
+	unsigned short iguales = 0;
 	cout << termino->palabra << " - ";
 	cout << lastTerminoCompleto << endl;
 	while(!distintos && (iguales <= termino->palabra.size() || iguales<=lastTerminoCompleto.size())) {
@@ -74,10 +86,30 @@ void IndexManager::saveLexico(Termino* termino, string repo_dir) {
 		}
 	}
 
-	int cantCaractDistintos = termino->palabra.size() - iguales;
-	string lexicoRegister = toString(iguales) + toString(cantCaractDistintos)+ &(termino->palabra[iguales])+toString(docOffset);
+	unsigned short cantCaractDistintos = termino->palabra.size() - iguales;
+//	string lexicoRegister = toString(iguales) + toString(cantCaractDistintos)+ &(termino->palabra[iguales])+toString(docOffset);
 
-	FileManager::getInstance()->saveToFile(lexicoRegister,repo_dir+"/"+kLEXICO);
+
+	//FileManager::getInstance()->saveToFile(lexicoRegister,repo_dir+"/"+kLEXICO);
+
+
+	/*****************************ESTO LO TENDRIA QUE HACER EL FILE MANAGER**************************/
+	ofstream out((repo_dir+"/"+kLEXICO).c_str(),ios::binary | ios::app);
+	out.write((char*)&iguales,sizeof(iguales));
+	out.write((char*)&cantCaractDistintos,sizeof(cantCaractDistintos));
+	out.write(&(termino->palabra[iguales]),cantCaractDistintos);
+	out.write((char*)&docOffset,sizeof(docOffset));
+	out.close();
+
+
+	/* Actualizacion del offset de lexico
+	 * CADA REGISTRO DE LEXICO TIENE:
+	 * 		- 2 BYTES PARA REPETIDOS
+	 * 		- 2 BYTES PARA DISTINTOS
+	 * 		- CARACTERES DISTINTOS (VARIABLE)
+	 * 		- 4 BYTES PARA OFFSET A ENTEROS
+	 */
+	this->lexicOffset+=2+2+cantCaractDistintos+4;
 }
 
 void IndexManager::indexTerm(Termino* termino, string repo_dir) {
@@ -103,14 +135,24 @@ void IndexManager::indexTerm(Termino* termino, string repo_dir) {
 
 	if(cantPalabras % kNFRONTCODING == 0) {
 		saveTerminoCompleto(termino,repo_dir);
+		//El offset de termino se actualiza cada vez que cambio el termino completo
+		this->termOffset+=termino->palabra.size();
 	} else {
+		//El offset de lexico se actualiza dentro de saveLexico ya que necesito la cantidad de caracteres distintos
 		saveLexico(termino,repo_dir);
 	}
 
 
 	this->cantPalabras++;
+	// El offset de documentos se actualiza siempre
 	this->docOffset+=docRegister.size();
-	this->termOffset+=termino->palabra.size();
-	//this->lexicOffset = lexicRegister.size();
 
+}
+
+void IndexManager::reset() {
+	this->docOffset = 0;
+	this->termOffset = 0;
+	this->lexicOffset = 0;
+	this->cantPalabras = 0;
+	this->lastTerminoCompleto = "";
 }
