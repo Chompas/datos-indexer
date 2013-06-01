@@ -30,6 +30,7 @@ int Decoder::binaryToInt(string sBinary){
 
 }
 
+// Devuelve 0 si no existe el codigo
 int Decoder::decode(string code){
 	int log = 0;
 	while(code[log] == '0') {
@@ -37,6 +38,7 @@ int Decoder::decode(string code){
 	}
 	string sGammaBinary;
 	int i = log + 1;
+	//if(code[log] != '1' || i >= code.size()) return 0;
 	for(int j = 0; j<log; j++){
 		sGammaBinary = sGammaBinary + code[i];
 		i++;

@@ -30,6 +30,15 @@ int FileManager::saveToFile(string buffer,string filepath ){
 	ofstream file;
 	file.open(filepath.c_str(),ios::app | ios::binary);
 	file << buffer;
+	file.close();
 	//Habria que devolver si se pudo instertar
+	return 0;
+}
+
+int FileManager::saveToFile(void* buffer, int size, string filepath) {
+	ofstream file;
+	file.open(filepath.c_str(),ios::app | ios::binary);
+	file.write((char*)buffer,size);
+	file.close();
 	return 0;
 }

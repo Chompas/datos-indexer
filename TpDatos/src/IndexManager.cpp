@@ -45,26 +45,14 @@ string IndexManager::toString(int number) {
 }
 
 void IndexManager::saveTerminoCompleto(Termino* termino,string repo_dir) {
-	string terminoCompleto = 	toString(termino->palabra.size()) +
-								toString(termOffset) +
-								toString(lexicOffset) +
-								toString(docOffset);
-	//FileManager::getInstance()->saveToFile(terminoCompleto,repo_dir+"/"+kTERMINOS);
 
-	// *******************ESTO LO TENDRIA QUE HACER EL FILE MANAGER*****************************
 	short size;
 	size = termino->palabra.size(); // Transformo el size a short para que ocupe 2 bytes
-	ofstream out((repo_dir+"/"+kTERMINOS).c_str(),ios::binary | ios::app);
-	out.write((char*)&size,sizeof(size));
-	out.write((char*)&termOffset,sizeof(termOffset));
-	out.write((char*)&lexicOffset,sizeof(lexicOffset));
-	out.write((char*)&docOffset,sizeof(docOffset));
-	out.close();
 
-//	FileManager::getInstance()->saveToFile(size,repo_dir+"/"+kTERMINOS);
-//	FileManager::getInstance()->saveToFile(termOffset,repo_dir+"/"+kTERMINOS);
-//	FileManager::getInstance()->saveToFile(lexicOffset,repo_dir+"/"+kTERMINOS);
-//	FileManager::getInstance()->saveToFile(docOffset,repo_dir+"/"+kTERMINOS);
+	FileManager::getInstance()->saveToFile(&size,sizeof(size),repo_dir+"/"+kTERMINOS);
+	FileManager::getInstance()->saveToFile(&termOffset,sizeof(termOffset),repo_dir+"/"+kTERMINOS);
+	FileManager::getInstance()->saveToFile(&lexicOffset,sizeof(lexicOffset),repo_dir+"/"+kTERMINOS);
+	FileManager::getInstance()->saveToFile(&docOffset,sizeof(docOffset),repo_dir+"/"+kTERMINOS);
 
 	FileManager::getInstance()->saveToFile(termino->palabra,repo_dir+"/"+kLISTATERMINOS);
 
@@ -87,19 +75,11 @@ void IndexManager::saveLexico(Termino* termino, string repo_dir) {
 	}
 
 	unsigned short cantCaractDistintos = termino->palabra.size() - iguales;
-//	string lexicoRegister = toString(iguales) + toString(cantCaractDistintos)+ &(termino->palabra[iguales])+toString(docOffset);
 
-
-	//FileManager::getInstance()->saveToFile(lexicoRegister,repo_dir+"/"+kLEXICO);
-
-
-	/*****************************ESTO LO TENDRIA QUE HACER EL FILE MANAGER**************************/
-	ofstream out((repo_dir+"/"+kLEXICO).c_str(),ios::binary | ios::app);
-	out.write((char*)&iguales,sizeof(iguales));
-	out.write((char*)&cantCaractDistintos,sizeof(cantCaractDistintos));
-	out.write(&(termino->palabra[iguales]),cantCaractDistintos);
-	out.write((char*)&docOffset,sizeof(docOffset));
-	out.close();
+	FileManager::getInstance()->saveToFile(&iguales,sizeof(iguales),repo_dir+"/"+kLEXICO);
+	FileManager::getInstance()->saveToFile(&cantCaractDistintos,sizeof(cantCaractDistintos),repo_dir+"/"+kLEXICO);
+	FileManager::getInstance()->saveToFile(&(termino->palabra[iguales]),repo_dir+"/"+kLEXICO);
+	FileManager::getInstance()->saveToFile(&docOffset,sizeof(docOffset),repo_dir+"/"+kLEXICO);
 
 
 	/* Actualizacion del offset de lexico

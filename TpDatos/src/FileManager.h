@@ -16,6 +16,7 @@ public:
 	static FileManager* getInstance();
 	virtual ~FileManager();
 	static int saveToFile(string buffer,string filepath );
+	static int saveToFile(void* buffer, int size, string filepath);
 private:
 	static FileManager* instance;
 	FileManager();

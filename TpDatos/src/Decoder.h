@@ -17,8 +17,9 @@ class Decoder {
 public:
 	Decoder();
 	virtual ~Decoder();
-	int decode(string code);
-	int binaryToInt(string sBinary);
+	static int decode(string code);
+private:
+	static int binaryToInt(string sBinary);
 };
 
 #endif /* DECODER_H_ */

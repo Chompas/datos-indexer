@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Parser.h"
 #include "Defines.h"
+#include "Decoder.h"
 using namespace std;
 
 // FALTA PONER ../ EN CADA UNO
@@ -97,12 +98,22 @@ int busquedaBinariaTerminos(string query, int cantRegistros, ifstream& tIdxIn, i
 	return medio;
 }
 
+int obtenerOffsetDocsTerminosCompletos(ifstream& tIdxIn, int registro) {
+	tIdxIn.seekg(registro*TAM_TERMINO_REG+10,tIdxIn.beg); // +10 poruqe saltea campos anteriores hasta docs
+	int offset;
+	tIdxIn.read((char*)offset,sizeof(offset));
+	return offset;
+}
+
+
 //Devuelve el offset a documentos de la query o -1 si no lo encuentra
 int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn, ifstream& tLexico) {
 
 
 	string terminoCompleto = obtenerTermino(tIdxIn,tListaIn,pos);
 	int offLexico, offDocs;
+	int counter = 0;
+	bool encontrado = false;
 	unsigned short iguales, distintos;
 
 	string palabra;
@@ -110,10 +121,9 @@ int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn
 	//PRIMERO ME FIJO SI ES EL DE TERMINOS COMPLETOS
 	if(terminoCompleto.compare(query) == 0) {
 		cout << "El termino " + query + " esta en la lista de completos" << endl;
+		offDocs = obtenerOffsetDocsTerminosCompletos(tIdxIn,pos);
 	// BUSCO EN EL BLOQUE EN EL ARCHIVO DE LEXICO
 	} else {
-		int counter = 0;
-		bool encontrado = false;
 		tIdxIn.seekg(pos*TAM_TERMINO_REG+6,tIdxIn.beg); // +6 porque me salteo los dos primeros campos
 		tIdxIn.read((char*)&offLexico,sizeof(offLexico));
 		tLexico.seekg(offLexico,tLexico.beg);
@@ -137,8 +147,17 @@ int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn
 		}
 	}
 
-	//TODO ir a buscar el offset de documentos
-	return 0;
+	if(!encontrado) offDocs = -1;
+	return offDocs;
+
+}
+
+string obtenerDocs(ifstream& tDocs, int docOffset) {
+	tDocs.seekg(docOffset,tDocs.beg);
+
+	//cout << Decoder::decode("001") << endl;
+
+	return "";
 
 }
 
@@ -158,6 +177,8 @@ void consulta(string repo, string query) {
 
 	//Tengo que traerme el registro de documentos
 	int docOffset = busquedaEnBloque(query,pos, tIdxIn, tListaIn, tLexico);
+
+	string docs = obtenerDocs(tDocs,docOffset);
 
 //TODO traerme el registro de documentos
 
@@ -208,7 +229,7 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-		consulta("probando","carozo");
+		consulta("probando","dedito");
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;
