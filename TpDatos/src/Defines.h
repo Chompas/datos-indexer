@@ -13,7 +13,7 @@
 #define kLEXICO			"lexico"
 #define kLISTATERMINOS	"terminosLista"
 
-#define kNFRONTCODING	5
+#define kNFRONTCODING	10
 
 /*
  * TAMANIO DEL REGISTRO DE TERMINOS COMPLETOS:

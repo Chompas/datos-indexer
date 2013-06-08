@@ -8,6 +8,8 @@
 #include "Parser.h"
 #include <sstream>
 #include "IndexManager.h"
+#include "ByteBuffer.h"
+#include "Defines.h"
 
 int MAX_MEM = 1024;
 
@@ -194,6 +196,8 @@ void Parser::guardarEnDisco(list<TerminoRegister> terminos){
 
 	//PROCESAR ULTIMO
 	IndexManager::getInstance()->indexTerm(termino,repo_dir);
+	//VACIO EL BUFFER DE DOCUMENTOS
+	ByteBuffer::getInstance()->vaciar(repo_dir+"/"+kDOCUMENTOS);
 	IndexManager::getInstance()->reset();
 
 

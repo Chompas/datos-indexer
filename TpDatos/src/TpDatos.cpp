@@ -1,7 +1,8 @@
 #include <iostream>
 #include "Parser.h"
 #include "Defines.h"
-#include "Decoder.h"
+#include "FileManager.h"
+#include "ByteBuffer.h"
 using namespace std;
 
 // FALTA PONER ../ EN CADA UNO
@@ -153,8 +154,8 @@ int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn
 }
 
 string obtenerDocs(ifstream& tDocs, int docOffset) {
-	tDocs.seekg(docOffset,tDocs.beg);
-
+	//tDocs.seekg(docOffset,tDocs.beg);
+	//TODO: TRAER EL REGISTRO DE DOCS Y CONVERTIRLOS. ACORDARSE QUE EL OFFSET SE REFIERE AL BIT, NO AL BYTE
 	//cout << Decoder::decode("001") << endl;
 
 	return "";
@@ -203,7 +204,7 @@ int main(int argc, char** argv) {
 		}*/
 	//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 	//	indexar(argv[2], argv[3]);
-//	indexar("probando","texto_prueba");
+	indexar("probando","texto_prueba_2");
 /*
 	} else if (instruccion == "q") {
 		// Consulta
@@ -229,12 +230,57 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-		consulta("probando","dedito");
+//		consulta("probando","sur");
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;
 //		return 1;
 //	}
+
+
+	// PRUEBAS DE BYTES. SACAR ESTO DESPUES
+
+	/*unsigned char byte = 0;
+	string aux = "10101011";
+	//Quiero guardar 11000101
+	byte = (unsigned char)Coder::binaryToInt(aux);
+	printf("%d\n",byte);
+	cout << Coder::numberToBinary((int)byte) << endl;
+
+	FileManager::getInstance()->saveToFile(&byte,sizeof(byte),dir_repositorios+"/prueba_bytes");
+	FileManager::getInstance()->saveToFile(&byte,sizeof(byte),dir_repositorios+"/prueba_bytes");
+	ifstream fp((dir_repositorios+"/prueba_bytes").c_str(),ios::in|ios::binary);
+	unsigned char byteLeido;
+	fp.read((char*)&byteLeido,sizeof(byteLeido));
+	cout << Coder::numberToBinary((int)byteLeido) << endl;
+*/
+
+//	ByteBuffer::getInstance()->saveBytes("11001100111111110101010100",dir_repositorios+"/prueba_bytes");
+//	ByteBuffer::getInstance()->saveBytes("1100110",dir_repositorios+"/prueba_bytes");
+//
+//	ifstream fp((dir_repositorios+"/prueba_bytes").c_str(),ios::in|ios::binary);
+//	unsigned char byteLeido;
+//	fp.read((char*)&byteLeido,sizeof(byteLeido));
+//	cout << Coder::numberToBinary((int)byteLeido) << endl;
+//	fp.read((char*)&byteLeido,sizeof(byteLeido));
+//	cout << Coder::numberToBinary((int)byteLeido) << endl;
+//	fp.read((char*)&byteLeido,sizeof(byteLeido));
+//	cout << Coder::numberToBinary((int)byteLeido) << endl;
+//	fp.read((char*)&byteLeido,sizeof(byteLeido));
+//	cout << Coder::numberToBinary((int)byteLeido) << endl;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	return 0;
 }

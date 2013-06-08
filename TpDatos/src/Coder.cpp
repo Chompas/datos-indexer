@@ -55,7 +55,7 @@ string Coder::unarioCode(int x) {
 	return code + "1";
 }
 
-string binary(int x) {
+string Coder::numberToBinary(int x) {
 	string code;
 	int q, r;
 	if(x == 0) return "0";
@@ -75,7 +75,7 @@ string Coder::binaryPart(int x) {
 	int codeLength = log2(x);
 	string code;
 	if(codeLength > 0){
-		code = binary(numToBinary);
+		code = numberToBinary(numToBinary);
 	} else {
 		code = "";
 	}
@@ -85,4 +85,46 @@ string Coder::binaryPart(int x) {
 	}
 
 	return code;
+}
+
+int Coder::binaryToInt(string sBinary){
+	int pos = 0;
+	int num = 0;
+	for(int i = sBinary.length()-1; i>=0; i--){
+		if(sBinary[i]=='1'){
+			num = num + pow(2.0,pos);
+		}
+		pos++;
+	}
+	return num;
+
+}
+
+// Devuelve 0 si no existe el codigo
+int Coder::decode(string code){
+	int log = 0;
+	while(code[log] == '0') {
+	    log++;
+	}
+	string sGammaBinary;
+	int i = log + 1;
+	//if(code[log] != '1' || i >= code.size()) return 0;
+	for(int j = 0; j<log; j++){
+		sGammaBinary = sGammaBinary + code[i];
+		i++;
+	}
+	int iGammaBinary = binaryToInt(sGammaBinary);
+
+	int y = iGammaBinary + pow(2.0,log);
+
+	//Leo y-1 bits mas
+
+	string sDeltaBinary;
+	for(int j = 0; j<y-1; j++){
+		sDeltaBinary = sDeltaBinary + code[i];
+		i++;
+	}
+	int iDeltaBinary = binaryToInt(sDeltaBinary);
+
+	return iDeltaBinary + pow(2.0,y-1);
 }

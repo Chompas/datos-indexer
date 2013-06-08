@@ -8,6 +8,7 @@
 #include "IndexManager.h"
 #include "FileManager.h"
 #include "Defines.h"
+#include "ByteBuffer.h"
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -109,7 +110,7 @@ void IndexManager::indexTerm(Termino* termino, string repo_dir) {
 	}
 
 	// Guardo registro en el archivo de documentos
-	FileManager::getInstance()->saveToFile(docRegister,repo_dir+"/"+kDOCUMENTOS);
+	ByteBuffer::getInstance()->saveBytes(docRegister,repo_dir+"/"+kDOCUMENTOS);
 
 	//Guardo termino en el archivo de terminos completos o en el de lexico
 
