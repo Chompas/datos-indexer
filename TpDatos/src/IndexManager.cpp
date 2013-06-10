@@ -64,10 +64,7 @@ void IndexManager::saveTerminoCompleto(Termino* termino,string repo_dir) {
 void IndexManager::saveLexico(Termino* termino, string repo_dir) {
 	bool distintos = false;
 	unsigned short iguales = 0;
-	cout << termino->palabra << " - ";
-	cout << lastTerminoCompleto << endl;
 	while(!distintos && (iguales <= termino->palabra.size() || iguales<=lastTerminoCompleto.size())) {
-		cout << termino->palabra[iguales] << " - " << lastTerminoCompleto[iguales] << endl;
 		if(termino->palabra[iguales] != lastTerminoCompleto[iguales]) {
 			distintos = true;
 		} else {
@@ -99,7 +96,6 @@ void IndexManager::indexTerm(Termino* termino, string repo_dir) {
 	termino->convertIntoDistances();
 
 	//Guardar el termino en disco
-
 	string docRegister = "";
 
 	docRegister+=termino->distDocs;
@@ -109,6 +105,7 @@ void IndexManager::indexTerm(Termino* termino, string repo_dir) {
 		docRegister+=*positionIt;
 	}
 
+	cout << termino->palabra + ": "+ docRegister << endl;
 	// Guardo registro en el archivo de documentos
 	ByteBuffer::getInstance()->saveBytes(docRegister,repo_dir+"/"+kDOCUMENTOS);
 

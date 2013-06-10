@@ -48,9 +48,11 @@ void ByteBuffer::saveBytes(string data, string filepath) {
 
 void ByteBuffer::vaciar(string filepath) {
 	//Completo el byte con 0s
+	int len;
 	if(bitsOcupados.length()>0) {
 		unsigned char byte;
-		for(int i = 0; i < 8 - bitsOcupados.length(); i++){
+		len = bitsOcupados.length();
+		for(int i = 0; i < 8 - len; i++){
 			bitsOcupados+="0";
 		}
 		byte = (unsigned char)Coder::binaryToInt(bitsOcupados);

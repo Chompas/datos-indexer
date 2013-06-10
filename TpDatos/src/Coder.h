@@ -18,7 +18,7 @@ public:
 	Coder();
 	virtual ~Coder();
 	static string encode(int x);
-	static int decode(string code);
+	static int decode(string code, int* tam);
 	static string numberToBinary(int x);
 	static int binaryToInt(string sBinary);
 private:

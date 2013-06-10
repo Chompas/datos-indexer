@@ -151,7 +151,7 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 			//Ordeno la lista de terminos
 			terminos.sort(TerminoRegister::cmp);
 
-			//imprimirArchivoParcial(terminos);
+			imprimirArchivoParcial(terminos);
 			guardarEnDisco(terminos);
 			terminos.clear();
 		}
@@ -163,7 +163,7 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 	//Ordeno la lista de terminos
 	terminos.sort(TerminoRegister::cmp);
 
-	//imprimirArchivoParcial(terminos);
+	imprimirArchivoParcial(terminos);
 	guardarEnDisco(terminos);
 
 	closedir(dp);
@@ -173,7 +173,7 @@ void Parser::guardarEnDisco(list<TerminoRegister> terminos){
 
 	std::list<TerminoRegister>::const_iterator iterator;
 
-	cout << "************GUARDADO EN DISCO*******************";
+	cout << "************GUARDADO EN DISCO*******************" << endl;
 
 	Termino* termino;
 	termino = new Termino(terminos.begin()->getTermino());

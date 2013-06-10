@@ -100,15 +100,15 @@ int busquedaBinariaTerminos(string query, int cantRegistros, ifstream& tIdxIn, i
 }
 
 int obtenerOffsetDocsTerminosCompletos(ifstream& tIdxIn, int registro) {
-	tIdxIn.seekg(registro*TAM_TERMINO_REG+10,tIdxIn.beg); // +10 poruqe saltea campos anteriores hasta docs
+	tIdxIn.seekg(registro*TAM_TERMINO_REG+10,tIdxIn.beg); // +10 porque saltea campos anteriores hasta docs
 	int offset;
-	tIdxIn.read((char*)offset,sizeof(offset));
+	tIdxIn.read((char*)&offset,sizeof(offset));
 	return offset;
 }
 
 
-//Devuelve el offset a documentos de la query o -1 si no lo encuentra
-int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn, ifstream& tLexico) {
+//Devuelve el offset a documentos de la query o -1 si no lo encuentra. Setea el offset al siguiente pasado por parametro
+int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn, ifstream& tLexico, int* docOffsetSiguiente) {
 
 
 	string terminoCompleto = obtenerTermino(tIdxIn,tListaIn,pos);
@@ -119,15 +119,26 @@ int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn
 
 	string palabra;
 
+	tIdxIn.seekg(pos*TAM_TERMINO_REG+6,tIdxIn.beg); // +6 porque me salteo los dos primeros campos
+	tIdxIn.read((char*)&offLexico,sizeof(offLexico));
+	tLexico.seekg(offLexico,tLexico.beg);
+
 	//PRIMERO ME FIJO SI ES EL DE TERMINOS COMPLETOS
 	if(terminoCompleto.compare(query) == 0) {
 		cout << "El termino " + query + " esta en la lista de completos" << endl;
 		offDocs = obtenerOffsetDocsTerminosCompletos(tIdxIn,pos);
+		encontrado = true;
+
+		//OBTENGO EL OFFSET SIGUIENTE
+		tLexico.read((char*)&iguales,sizeof(iguales));
+		tLexico.read((char*)&distintos,sizeof(distintos));
+
+		char* caracteresDistintos = new char[distintos];
+		tLexico.read(caracteresDistintos,distintos);
+		tLexico.read((char*)docOffsetSiguiente,sizeof(*docOffsetSiguiente));
+
 	// BUSCO EN EL BLOQUE EN EL ARCHIVO DE LEXICO
 	} else {
-		tIdxIn.seekg(pos*TAM_TERMINO_REG+6,tIdxIn.beg); // +6 porque me salteo los dos primeros campos
-		tIdxIn.read((char*)&offLexico,sizeof(offLexico));
-		tLexico.seekg(offLexico,tLexico.beg);
 		while(counter < kNFRONTCODING && !encontrado) {
 			tLexico.read((char*)&iguales,sizeof(iguales));
 			tLexico.read((char*)&distintos,sizeof(distintos));
@@ -139,12 +150,27 @@ int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn
 			// Formo la palabra con los caracteres iguales del termino completo y los distintos extraidos del archivo de lexico
 			palabra = terminoCompleto.substr(0,iguales) + caracteresDistintos;
 
+			counter++;
+
 			if(palabra.compare(query) == 0) {
 				cout << "El termino " + query + " esta en el archivo de lexico" << endl;
 				encontrado = true;
+				if(counter == kNFRONTCODING -1) {
+					*docOffsetSiguiente = obtenerOffsetDocsTerminosCompletos(tIdxIn,pos+1);
+				}else{
+					tLexico.read((char*)&iguales,sizeof(iguales));
+					tLexico.read((char*)&distintos,sizeof(distintos));
+
+					char* caracteresDistintos = new char[distintos];
+					tLexico.read(caracteresDistintos,distintos);
+					tLexico.read((char*)docOffsetSiguiente,sizeof(*docOffsetSiguiente));
+					//Caso especial: que sea el ultimo
+					if(tLexico.eof()){
+						 *docOffsetSiguiente = -1;
+					}
+				}
 			}
 
-			counter++;
 		}
 	}
 
@@ -153,12 +179,68 @@ int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn
 
 }
 
-string obtenerDocs(ifstream& tDocs, int docOffset) {
-	//tDocs.seekg(docOffset,tDocs.beg);
-	//TODO: TRAER EL REGISTRO DE DOCS Y CONVERTIRLOS. ACORDARSE QUE EL OFFSET SE REFIERE AL BIT, NO AL BYTE
-	//cout << Decoder::decode("001") << endl;
 
-	return "";
+
+string obtenerDocs(ifstream& tDocs, int docOffset, int docOffsetSiguiente) {
+	int fileOffset = docOffset/8;
+	tDocs.seekg(fileOffset,tDocs.beg);// Lo posiciona en el byte correspondiente al bit
+
+	unsigned char byteLeidoAux;
+	string byteLeido = "";
+	string docs = "";
+	//Calculo cuantos bytes tengo que leer
+	int endOffset = docOffsetSiguiente/8;
+	if(docOffsetSiguiente%8!=0) {
+		endOffset++;
+	}
+	int len;
+	for(int i = 0; i < endOffset-fileOffset; i++) {
+		tDocs.read((char*)&byteLeidoAux,1);
+		// Lo convierto a tira de bits
+		byteLeido = Coder::numberToBinary((int)byteLeidoAux);
+		//Agrego ceros
+		len = byteLeido.length();
+		for(int j = 0; j < 8-len; j++) {
+			byteLeido = "0" + byteLeido;
+		}
+		docs+=byteLeido;
+		byteLeido.clear();
+	}
+
+	return docs.substr(docOffset - fileOffset*8,docOffsetSiguiente-docOffset);
+
+
+}
+
+void decodeDocRegister(string docs) {
+	//LO HAGO A MANO ACA, DESPUES VER COMO ADAPTARLO A LA CLASE CODER
+	int tam = 0;
+	int cantDocs = Coder::decode(docs,&tam);
+	docs = docs.substr(tam,docs.length()-tam);
+	cout << "Cantidad de documentos: " << cantDocs << endl;
+	cout << "Documentos: " << endl;
+	int doc = 0;
+	// Leo documentos
+	for(int i = 0; i < cantDocs; i++) {
+		doc+= Coder::decode(docs,&tam);
+		cout << doc << endl;
+		docs = docs.substr(tam,docs.length()-tam);
+	}
+	// Leo posiciones
+	int cantPos;
+	int pos;
+	for(int j = 0; j < cantDocs; j++) {
+		cantPos = Coder::decode(docs,&tam);
+		docs = docs.substr(tam,docs.length()-tam);
+		cout << "Cantidad de posiciones: " << cantPos << endl;
+		cout << "Posiciones:" << endl;
+		pos = 0;
+		for(int k = 0; k < cantPos; k++) {
+			pos+= Coder::decode(docs,&tam);
+			cout << pos << endl;
+			docs = docs.substr(tam,docs.length()-tam);
+		}
+	}
 
 }
 
@@ -177,11 +259,22 @@ void consulta(string repo, string query) {
 	int pos = busquedaBinariaTerminos(query,cantRegistros,tIdxIn,tListaIn);
 
 	//Tengo que traerme el registro de documentos
-	int docOffset = busquedaEnBloque(query,pos, tIdxIn, tListaIn, tLexico);
+	int docOffsetSiguiente;
+	int docOffset = busquedaEnBloque(query,pos, tIdxIn, tListaIn, tLexico, &docOffsetSiguiente);
 
-	string docs = obtenerDocs(tDocs,docOffset);
-
-//TODO traerme el registro de documentos
+	string docs;
+	if(docOffset >= 0){
+		//Caso especial: que sea el ultimo
+		if(docOffsetSiguiente < 0){
+			tDocs.seekg (0, tDocs.end);
+			docOffsetSiguiente = tDocs.tellg()*8;//Final del archivo de documentos
+			tDocs.seekg (0, tDocs.beg);
+		}
+		docs = obtenerDocs(tDocs,docOffset,docOffsetSiguiente);
+		decodeDocRegister(docs);
+	} else {
+		cout << "Consulta no encontrada" << endl;
+	}
 
 	tIdxIn.close();
 	tListaIn.close();
@@ -204,7 +297,7 @@ int main(int argc, char** argv) {
 		}*/
 	//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 	//	indexar(argv[2], argv[3]);
-	indexar("probando","texto_prueba_2");
+	//indexar("probando","texto_prueba_2");
 /*
 	} else if (instruccion == "q") {
 		// Consulta
@@ -230,57 +323,12 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-//		consulta("probando","sur");
+		consulta("probando","sur");
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;
 //		return 1;
 //	}
-
-
-	// PRUEBAS DE BYTES. SACAR ESTO DESPUES
-
-	/*unsigned char byte = 0;
-	string aux = "10101011";
-	//Quiero guardar 11000101
-	byte = (unsigned char)Coder::binaryToInt(aux);
-	printf("%d\n",byte);
-	cout << Coder::numberToBinary((int)byte) << endl;
-
-	FileManager::getInstance()->saveToFile(&byte,sizeof(byte),dir_repositorios+"/prueba_bytes");
-	FileManager::getInstance()->saveToFile(&byte,sizeof(byte),dir_repositorios+"/prueba_bytes");
-	ifstream fp((dir_repositorios+"/prueba_bytes").c_str(),ios::in|ios::binary);
-	unsigned char byteLeido;
-	fp.read((char*)&byteLeido,sizeof(byteLeido));
-	cout << Coder::numberToBinary((int)byteLeido) << endl;
-*/
-
-//	ByteBuffer::getInstance()->saveBytes("11001100111111110101010100",dir_repositorios+"/prueba_bytes");
-//	ByteBuffer::getInstance()->saveBytes("1100110",dir_repositorios+"/prueba_bytes");
-//
-//	ifstream fp((dir_repositorios+"/prueba_bytes").c_str(),ios::in|ios::binary);
-//	unsigned char byteLeido;
-//	fp.read((char*)&byteLeido,sizeof(byteLeido));
-//	cout << Coder::numberToBinary((int)byteLeido) << endl;
-//	fp.read((char*)&byteLeido,sizeof(byteLeido));
-//	cout << Coder::numberToBinary((int)byteLeido) << endl;
-//	fp.read((char*)&byteLeido,sizeof(byteLeido));
-//	cout << Coder::numberToBinary((int)byteLeido) << endl;
-//	fp.read((char*)&byteLeido,sizeof(byteLeido));
-//	cout << Coder::numberToBinary((int)byteLeido) << endl;
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	return 0;
 }

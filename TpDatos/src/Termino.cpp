@@ -63,12 +63,10 @@ void Termino::convertIntoDistances() {
 			anterior = *positionIt;
 		}
 		this->distPositions.push_back(posDeltaAux);
-		cout << posDeltaAux << endl;
 		posDeltaAux = "";
 		anterior = 0;
 
 	}
 
-	cout << endl;
 
 }

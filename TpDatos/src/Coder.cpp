@@ -100,8 +100,8 @@ int Coder::binaryToInt(string sBinary){
 
 }
 
-// Devuelve 0 si no existe el codigo
-int Coder::decode(string code){
+// Devuelve 0 si no existe el codigo. Guarda en tam el tamanio del codigo decodificado
+int Coder::decode(string code, int* tam){
 	int log = 0;
 	while(code[log] == '0') {
 	    log++;
@@ -125,6 +125,8 @@ int Coder::decode(string code){
 		i++;
 	}
 	int iDeltaBinary = binaryToInt(sDeltaBinary);
+
+	*tam = 2*log + y; // Longitud del codigo
 
 	return iDeltaBinary + pow(2.0,y-1);
 }
