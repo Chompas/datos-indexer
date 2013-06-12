@@ -20,6 +20,7 @@ public:
 	string palabra;
 	list<int> docs;
 	list<list<int> > listaPosiciones;
+	list<list<int> > listaPosicionesNormalizadas;
 	string distDocs;
 	list<string> distPositions;
 	void addPositionsForDoc(int doc, list<int>* positions);

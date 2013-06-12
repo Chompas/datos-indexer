@@ -3,6 +3,9 @@
 #include "Defines.h"
 #include "FileManager.h"
 #include "ByteBuffer.h"
+#include "Termino.h"
+#include "Utilidades.h"
+#include <list>
 using namespace std;
 
 // FALTA PONER ../ EN CADA UNO
@@ -212,7 +215,7 @@ string obtenerDocs(ifstream& tDocs, int docOffset, int docOffsetSiguiente) {
 
 }
 
-void decodeDocRegister(string docs) {
+Termino* decodeDocRegister(string palabra, string docs) {
 	//LO HAGO A MANO ACA, DESPUES VER COMO ADAPTARLO A LA CLASE CODER
 	int tam = 0;
 	int cantDocs = Coder::decode(docs,&tam);
@@ -220,10 +223,13 @@ void decodeDocRegister(string docs) {
 	cout << "Cantidad de documentos: " << cantDocs << endl;
 	cout << "Documentos: " << endl;
 	int doc = 0;
+	Termino* termino = new Termino(palabra);
+	int* listaDocumentos = (int*)malloc(cantDocs*sizeof(int));
 	// Leo documentos
 	for(int i = 0; i < cantDocs; i++) {
 		doc+= Coder::decode(docs,&tam);
 		cout << doc << endl;
+		listaDocumentos[i] = doc;
 		docs = docs.substr(tam,docs.length()-tam);
 	}
 	// Leo posiciones
@@ -235,13 +241,36 @@ void decodeDocRegister(string docs) {
 		cout << "Cantidad de posiciones: " << cantPos << endl;
 		cout << "Posiciones:" << endl;
 		pos = 0;
+		// VA DELETE?????
+		list<int>* listaPosiciones = new list<int>;
 		for(int k = 0; k < cantPos; k++) {
 			pos+= Coder::decode(docs,&tam);
 			cout << pos << endl;
+			listaPosiciones->push_back(pos);
 			docs = docs.substr(tam,docs.length()-tam);
 		}
+		termino->addPositionsForDoc(listaDocumentos[j],listaPosiciones);
 	}
+	free(listaDocumentos);
+	return termino;
+}
 
+void intersecar(list<int>* interseccion, list<int> docsAIntersecar) {
+	std::list<int>::const_iterator interseccionIt = interseccion->begin();
+	std::list<int>::const_iterator docsIt = docsAIntersecar.begin();
+	list<int> nuevaInterseccion;
+	while(interseccionIt != interseccion->end() && docsIt != docsAIntersecar.end()) {
+		if(*interseccionIt < *docsIt) {
+			++interseccionIt;
+		} else if(*interseccionIt > * docsIt){
+			++docsIt;
+		} else {
+			nuevaInterseccion.push_back(*interseccionIt);
+			++interseccionIt;
+			++docsIt;
+		}
+	}
+	*interseccion = nuevaInterseccion;
 }
 
 void consulta(string repo, string query) {
@@ -256,28 +285,85 @@ void consulta(string repo, string query) {
 	int cantRegistros = tIdxIn.tellg()/TAM_TERMINO_REG;
 	tIdxIn.seekg(0,tIdxIn.beg);
 
-	int pos = busquedaBinariaTerminos(query,cantRegistros,tIdxIn,tListaIn);
+	list<Termino*> terminos;
 
-	//Tengo que traerme el registro de documentos
-	int docOffsetSiguiente;
-	int docOffset = busquedaEnBloque(query,pos, tIdxIn, tListaIn, tLexico, &docOffsetSiguiente);
+	char* token = strtok((char*) query.c_str(), kSEPARADORES);
+	if (token != NULL)
+		Utilidades::string_a_minusculas(token);
+	int posicion = 0;
+	bool falla = false;
+	while (token != NULL && !falla) {
+		if (!Utilidades::isNumber(token) && strlen(token) > 1) {
 
-	string docs;
-	if(docOffset >= 0){
-		//Caso especial: que sea el ultimo
-		if(docOffsetSiguiente < 0){
-			tDocs.seekg (0, tDocs.end);
-			docOffsetSiguiente = tDocs.tellg()*8;//Final del archivo de documentos
-			tDocs.seekg (0, tDocs.beg);
+			int pos = busquedaBinariaTerminos(token,cantRegistros,tIdxIn,tListaIn);
+
+			//Tengo que traerme el registro de documentos
+			int docOffsetSiguiente;
+			int docOffset = busquedaEnBloque(token,pos, tIdxIn, tListaIn, tLexico, &docOffsetSiguiente);
+
+			string docRegister;
+			if(docOffset >= 0){
+				//Caso especial: que sea el ultimo
+				if(docOffsetSiguiente < 0){
+					tDocs.seekg (0, tDocs.end);
+					docOffsetSiguiente = tDocs.tellg()*8;//Final del archivo de documentos
+					tDocs.seekg (0, tDocs.beg);
+				}
+				docRegister = obtenerDocs(tDocs,docOffset,docOffsetSiguiente);
+				terminos.push_back(decodeDocRegister(token, docRegister));
+			} else {
+				cout << "Consulta no encontrada" << endl;
+				falla = true;
+			}
+		} else {
+			terminos.push_back(NULL); //se salteo el termino
 		}
-		docs = obtenerDocs(tDocs,docOffset,docOffsetSiguiente);
-		decodeDocRegister(docs);
-	} else {
-		cout << "Consulta no encontrada" << endl;
+		//Tomo el siguiente token
+		token = strtok(NULL, kSEPARADORES);
+		if (token != NULL)
+			Utilidades::string_a_minusculas(token);
+		posicion++;
 	}
+
+
+	//Normalizacion de posiciones e interseccion de documentos
+	list<int> interseccionDocs;
+	list<Termino*>::const_iterator it;
+	int counter = 0;
+	for (it = terminos.begin(); it != terminos.end(); ++it) {
+		if((*it)!=NULL) {
+
+			if(interseccionDocs.empty()) {
+				interseccionDocs = (*it)->docs;
+			} else {
+				intersecar(&interseccionDocs,(*it)->docs);
+			}
+
+			list<int>* posicionesNormalizadas = new list<int>;
+			std::list<list<int> >::const_iterator positionListIt;
+			for (positionListIt = (*it)->listaPosiciones.begin(); positionListIt != (*it)->listaPosiciones.end(); ++positionListIt){
+				std::list<int>::const_iterator positionIt;
+				for(positionIt = positionListIt->begin(); positionIt != positionListIt->end() ; ++positionIt){
+					posicionesNormalizadas->push_back((*positionIt)-counter);
+				}
+				(*it)->listaPosicionesNormalizadas.push_back(*posicionesNormalizadas);
+			}
+		}
+		counter++;
+	}
+
+
+	list<int>::const_iterator itInterseccion;
+	for(itInterseccion = interseccionDocs.begin(); itInterseccion != interseccionDocs.end(); ++itInterseccion) {
+		cout << (*itInterseccion) << endl;
+	}
+
+
 
 	tIdxIn.close();
 	tListaIn.close();
+	tLexico.close();
+	tDocs.close();
 
 }
 
@@ -297,7 +383,7 @@ int main(int argc, char** argv) {
 		}*/
 	//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 	//	indexar(argv[2], argv[3]);
-	//indexar("probando","texto_prueba_2");
+//	indexar("probando","texto_prueba");
 /*
 	} else if (instruccion == "q") {
 		// Consulta
@@ -323,7 +409,7 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-		consulta("probando","sur");
+		consulta("probando","aula aullido aulla");
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;

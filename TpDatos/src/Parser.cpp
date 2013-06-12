@@ -10,10 +10,9 @@
 #include "IndexManager.h"
 #include "ByteBuffer.h"
 #include "Defines.h"
+#include "Utilidades.h"
 
 int MAX_MEM = 1024;
-
-string separadores = " ,.;:~{}[]+-_=?¿!¡/@#$%&¬()<>€çÇ\t\n\"'±¹²³ºª·";
 
 Parser* Parser::instance = 0;
 
@@ -28,18 +27,6 @@ Parser* Parser::getInstance() {
 	return instance;
 }
 
-bool isNumber(string s) {
-	std::string::const_iterator it = s.begin();
-	while (it != s.end() && std::isdigit(*it))
-		++it;
-	return !s.empty() && it == s.end();
-}
-void string_a_minusculas(char* string) {
-	for (int i = 0; string[i] != '\0'; i++) {
-		string[i] = (char) tolower(string[i]);
-	}
-}
-
 /*
  * Recorre el archivo y va separando en tokens cada linea. Asigna los terminos al vector de terminos
  */
@@ -52,12 +39,12 @@ void Parser::processFile(const char* path, short nro_doc,
 	while (!fin.eof()) {
 
 		getline(fin, line);
-		char* token = strtok((char*) line.c_str(), separadores.c_str());
+		char* token = strtok((char*) line.c_str(), kSEPARADORES);
 		if (token != NULL)
-			string_a_minusculas(token);
+			Utilidades::string_a_minusculas(token);
 		bool nuevo = true;
 		while (token != NULL) {
-			if (!isNumber(token) && strlen(token) > 1) {
+			if (!Utilidades::isNumber(token) && strlen(token) > 1) {
 				//Me fijo si el termino ya esta en el vector y en el documento
 				//TODO BUSQUEDA BINARIA
 				for (list<TerminoRegister>::iterator it = terminos->begin(); it != terminos->end(); ++it) {
@@ -79,9 +66,9 @@ void Parser::processFile(const char* path, short nro_doc,
 			}
 			//Tomo el siguiente token
 
-			token = strtok(NULL, separadores.c_str());
+			token = strtok(NULL, kSEPARADORES);
 			if (token != NULL)
-				string_a_minusculas(token);
+				Utilidades::string_a_minusculas(token);
 			posicion++;
 			nuevo = true;
 		}
