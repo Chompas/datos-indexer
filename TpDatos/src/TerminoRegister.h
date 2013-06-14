@@ -8,8 +8,8 @@
  */
 
 #include <string>
-#include <list>
 #include <iostream>
+#include <vector>
 using namespace std;
 
 #ifndef TERMINOREGISTER_H_
@@ -38,12 +38,12 @@ public:
 		this->frecuencia++;
 	}
 
-	list<int>* getPosiciones() const {
-		return posiciones;
+	vector<int>* getPosiciones() const {
+		return listaPosiciones;
 	}
 
-	void addPosicion(int posicion) {
-		posiciones->push_back(posicion);
+	void addPosicionToList(int posicion) {
+		listaPosiciones->push_back(posicion);
 	}
 
 	string getTermino() const {
@@ -53,12 +53,25 @@ public:
 	void setTermino(string termino) {
 		this->termino = termino;
 	}
+	int getPosicion() const {
+		return posicion;
+	}
+
+	void setPosicion(int posicion) {
+		listaPosiciones->push_back(posicion);
+		this->posicion = posicion;
+	}
+
+	void inicializarPosiciones() {
+		listaPosiciones->push_back(this->posicion);
+	}
 
 private:
 	string termino;
 	int documento;
 	int frecuencia;
-	list<int>* posiciones;
+	int posicion;
+	vector<int>* listaPosiciones;
 };
 
 #endif /* TERMINOREGISTER_H_ */

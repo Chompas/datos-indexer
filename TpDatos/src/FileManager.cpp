@@ -26,19 +26,13 @@ FileManager* FileManager::getInstance(){
 	}
 	return instance;}
 
-int FileManager::saveToFile(string buffer,string filepath ){
-	ofstream file;
-	file.open(filepath.c_str(),ios::app | ios::binary);
-	file << buffer;
-	file.close();
+int FileManager::saveToFile(string buffer,ofstream& filestream ){
+	filestream << buffer;
 	//Habria que devolver si se pudo instertar
 	return 0;
 }
 
-int FileManager::saveToFile(void* buffer, int size, string filepath) {
-	ofstream file;
-	file.open(filepath.c_str(),ios::app | ios::binary);
-	file.write((char*)buffer,size);
-	file.close();
+int FileManager::saveToFile(void* buffer, int size, ofstream& filestream) {
+	filestream.write((char*)buffer,size);
 	return 0;
 }

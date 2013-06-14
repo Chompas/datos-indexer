@@ -9,21 +9,23 @@
 #define TERMINO_H_
 
 #include <string>
-#include <list>
+#include <vector>
 #include "Coder.h"
+#include "TerminoRegister.h"
 using namespace std;
 
 class Termino {
 public:
 	Termino(string palabra);
+	Termino(TerminoRegister termino);
 	virtual ~Termino();
 	string palabra;
-	list<int> docs;
-	list<list<int> > listaPosiciones;
-	list<list<int> > listaPosicionesNormalizadas;
+	vector<int> docs;
+	vector<vector<int> > listaPosiciones;
+	vector<vector<int> > listaPosicionesNormalizadas;
 	string distDocs;
-	list<string> distPositions;
-	void addPositionsForDoc(int doc, list<int>* positions);
+	vector<string> distPositions;
+	void addPositionsForDoc(int doc, vector<int>* positions);
 	void convertIntoDistances();
 private:
 	string toString(int number);

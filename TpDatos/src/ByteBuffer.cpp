@@ -27,7 +27,7 @@ ByteBuffer* ByteBuffer::getInstance() {
 	return instance;
 }
 
-void ByteBuffer::saveBytes(string data, string filepath) {
+void ByteBuffer::saveBytes(string data, ofstream& tDocs) {
 	string byteAGuardarAux;
 	unsigned char byte;
 	int size,pos = 0;
@@ -38,7 +38,7 @@ void ByteBuffer::saveBytes(string data, string filepath) {
 		byteAGuardarAux = bitsOcupados + data.substr(pos, size);
 		//Los convierto a un numero y los guardo en el archivo
 		byte = (unsigned char)Coder::binaryToInt(byteAGuardarAux);
-		FileManager::getInstance()->saveToFile(&byte,sizeof(byte),filepath);
+		FileManager::getInstance()->saveToFile(&byte,sizeof(byte),tDocs);
 		byteAGuardarAux.clear();
 		bitsOcupados.clear();
 		pos+= size;
@@ -46,7 +46,7 @@ void ByteBuffer::saveBytes(string data, string filepath) {
 	bitsOcupados+= data.substr(pos,data.length()-pos);
 }
 
-void ByteBuffer::vaciar(string filepath) {
+void ByteBuffer::vaciar(ofstream& tDocs) {
 	//Completo el byte con 0s
 	int len;
 	if(bitsOcupados.length()>0) {
@@ -56,7 +56,7 @@ void ByteBuffer::vaciar(string filepath) {
 			bitsOcupados+="0";
 		}
 		byte = (unsigned char)Coder::binaryToInt(bitsOcupados);
-		FileManager::getInstance()->saveToFile(&byte,sizeof(byte),filepath);
+		FileManager::getInstance()->saveToFile(&byte,sizeof(byte),tDocs);
 		bitsOcupados.clear();
 	}
 }

@@ -45,23 +45,23 @@ string IndexManager::toString(int number) {
 	return ss.str(); //return a string with the contents of the stream
 }
 
-void IndexManager::saveTerminoCompleto(Termino* termino,string repo_dir) {
+void IndexManager::saveTerminoCompleto(Termino* termino,ofstream& tIdx, ofstream& tLista) {
 
 	short size;
 	size = termino->palabra.size(); // Transformo el size a short para que ocupe 2 bytes
 
-	FileManager::getInstance()->saveToFile(&size,sizeof(size),repo_dir+"/"+kTERMINOS);
-	FileManager::getInstance()->saveToFile(&termOffset,sizeof(termOffset),repo_dir+"/"+kTERMINOS);
-	FileManager::getInstance()->saveToFile(&lexicOffset,sizeof(lexicOffset),repo_dir+"/"+kTERMINOS);
-	FileManager::getInstance()->saveToFile(&docOffset,sizeof(docOffset),repo_dir+"/"+kTERMINOS);
+	FileManager::getInstance()->saveToFile(&size,sizeof(size),tIdx);
+	FileManager::getInstance()->saveToFile(&termOffset,sizeof(termOffset),tIdx);
+	FileManager::getInstance()->saveToFile(&lexicOffset,sizeof(lexicOffset),tIdx);
+	FileManager::getInstance()->saveToFile(&docOffset,sizeof(docOffset),tIdx);
 
-	FileManager::getInstance()->saveToFile(termino->palabra,repo_dir+"/"+kLISTATERMINOS);
+	FileManager::getInstance()->saveToFile(termino->palabra,tLista);
 
 	this->lastTerminoCompleto = termino->palabra;
 
 }
 
-void IndexManager::saveLexico(Termino* termino, string repo_dir) {
+void IndexManager::saveLexico(Termino* termino, ofstream& tLexico) {
 	bool distintos = false;
 	unsigned short iguales = 0;
 	while(!distintos && (iguales <= termino->palabra.size() || iguales<=lastTerminoCompleto.size())) {
@@ -74,10 +74,10 @@ void IndexManager::saveLexico(Termino* termino, string repo_dir) {
 
 	unsigned short cantCaractDistintos = termino->palabra.size() - iguales;
 
-	FileManager::getInstance()->saveToFile(&iguales,sizeof(iguales),repo_dir+"/"+kLEXICO);
-	FileManager::getInstance()->saveToFile(&cantCaractDistintos,sizeof(cantCaractDistintos),repo_dir+"/"+kLEXICO);
-	FileManager::getInstance()->saveToFile(&(termino->palabra[iguales]),repo_dir+"/"+kLEXICO);
-	FileManager::getInstance()->saveToFile(&docOffset,sizeof(docOffset),repo_dir+"/"+kLEXICO);
+	FileManager::getInstance()->saveToFile(&iguales,sizeof(iguales),tLexico);
+	FileManager::getInstance()->saveToFile(&cantCaractDistintos,sizeof(cantCaractDistintos),tLexico);
+	FileManager::getInstance()->saveToFile(&(termino->palabra[iguales]),tLexico);
+	FileManager::getInstance()->saveToFile(&docOffset,sizeof(docOffset),tLexico);
 
 
 	/* Actualizacion del offset de lexico
@@ -90,8 +90,10 @@ void IndexManager::saveLexico(Termino* termino, string repo_dir) {
 	this->lexicOffset+=2+2+cantCaractDistintos+4;
 }
 
-void IndexManager::indexTerm(Termino* termino, string repo_dir) {
+void IndexManager::indexTerm(Termino* termino, ofstream& tIdx,ofstream& tLista,ofstream& tLexico,ofstream& tDocs) {
 	//Pasar docs y posiciones a distancias
+
+
 
 	termino->convertIntoDistances();
 
@@ -100,24 +102,24 @@ void IndexManager::indexTerm(Termino* termino, string repo_dir) {
 
 	docRegister+=termino->distDocs;
 
-	std::list<string>::const_iterator positionIt;
+	std::vector<string>::const_iterator positionIt;
 	for(positionIt = termino->distPositions.begin();positionIt != termino->distPositions.end(); ++positionIt ) {
 		docRegister+=*positionIt;
 	}
 
-	cout << termino->palabra + ": "+ docRegister << endl;
+	//cout << termino->palabra + ": "+ docRegister << endl;
 	// Guardo registro en el archivo de documentos
-	ByteBuffer::getInstance()->saveBytes(docRegister,repo_dir+"/"+kDOCUMENTOS);
+	ByteBuffer::getInstance()->saveBytes(docRegister,tDocs);
 
 	//Guardo termino en el archivo de terminos completos o en el de lexico
 
 	if(cantPalabras % kNFRONTCODING == 0) {
-		saveTerminoCompleto(termino,repo_dir);
+		saveTerminoCompleto(termino,tIdx, tLista);
 		//El offset de termino se actualiza cada vez que cambio el termino completo
 		this->termOffset+=termino->palabra.size();
 	} else {
 		//El offset de lexico se actualiza dentro de saveLexico ya que necesito la cantidad de caracteres distintos
-		saveLexico(termino,repo_dir);
+		saveLexico(termino,tLexico);
 	}
 
 

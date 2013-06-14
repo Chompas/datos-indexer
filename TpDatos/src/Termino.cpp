@@ -14,6 +14,11 @@ Termino::Termino(string palabra) {
 
 }
 
+Termino::Termino(TerminoRegister termino) {
+	this->palabra = termino.getTermino();
+//	this->docs
+}
+
 Termino::~Termino() {
 	// TODO Auto-generated destructor stub
 }
@@ -29,15 +34,18 @@ string Termino::toString(int number) {
 
 //PUBLIC
 
-void Termino::addPositionsForDoc(int doc, list<int>* positions) {
+void Termino::addPositionsForDoc(int doc, vector<int>* positions) {
 	this->docs.push_back(doc);
 	this->listaPosiciones.push_back(*positions);
 }
 
 void Termino::convertIntoDistances() {
-	std::list<int>::const_iterator iterator;
+	std::vector<int>::const_iterator iterator;
 	int anterior = 0;
 	this->distDocs = "";
+	if(docs.size() > 1) {
+		cout << "HOLA" << endl;
+	}
 	// Le preconcatenamos la frecuencia de documentos en Delta
 	this->distDocs+=Coder::encode(docs.size());
 	for (iterator = docs.begin(); iterator != docs.end(); ++iterator) {
@@ -51,10 +59,10 @@ void Termino::convertIntoDistances() {
 
 	}
 
-	std::list<list<int> >::const_iterator positionListIt;
+	std::vector<vector<int> >::const_iterator positionListIt;
 	anterior = 0;
 	for (positionListIt = listaPosiciones.begin(); positionListIt != listaPosiciones.end(); ++positionListIt){
-		std::list<int>::const_iterator positionIt;
+		std::vector<int>::const_iterator positionIt;
 		string posDeltaAux = "";
 		// Le preconcatenamos la frecuencia de cantidad de posiciones a cada lista de posiciones en DELTA
 		posDeltaAux+= Coder::encode(positionListIt->size());

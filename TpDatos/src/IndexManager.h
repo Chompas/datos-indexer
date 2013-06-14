@@ -14,7 +14,7 @@ class IndexManager {
 public:
 	static IndexManager* getInstance();
 	virtual ~IndexManager();
-	void indexTerm(Termino* termino, string repo_dir);
+	void indexTerm(Termino* termino, ofstream& tIdxIn,ofstream& tListaIn,ofstream& tLexico,ofstream& tDocs);
 	void reset();
 private:
 	IndexManager();
@@ -25,8 +25,8 @@ private:
 	string lastTerminoCompleto;
 	string toString(int number);
 	int cantPalabras;
-	void saveTerminoCompleto(Termino* termino,string repo_dir);
-	void saveLexico(Termino* termino, string repo_dir);
+	void saveTerminoCompleto(Termino* termino,ofstream& tIdx, ofstream& tLista);
+	void saveLexico(Termino* termino, ofstream& tLexico);
 
 };
 

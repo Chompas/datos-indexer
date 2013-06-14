@@ -5,7 +5,7 @@
 #include "ByteBuffer.h"
 #include "Termino.h"
 #include "Utilidades.h"
-#include <list>
+#include <vector>
 using namespace std;
 
 // FALTA PONER ../ EN CADA UNO
@@ -52,7 +52,7 @@ void indexar(string nombre, string dir) {
 }
 
 // Devuelve el termino de la lista de terminos completos dado el registro en el que se encuentra
-string obtenerTermino(ifstream& tIdxIn, ifstream& tListaIn, int registro) {
+string obtenerTermino(ifstream& tIdxIn, string listaTerminosCompletos, int registro) {
 
 	short cantCaracteres;
 	int tOff;
@@ -61,9 +61,7 @@ string obtenerTermino(ifstream& tIdxIn, ifstream& tListaIn, int registro) {
 	tIdxIn.read((char*)&cantCaracteres,2);
 	tIdxIn.read((char*)&tOff,4);
 
-	char* palabra = new char[cantCaracteres];
-	tListaIn.seekg(tOff,tListaIn.beg);
-	tListaIn.read(palabra,cantCaracteres);
+	string palabra = listaTerminosCompletos.substr(tOff,cantCaracteres);
 
 	return palabra;
 
@@ -71,7 +69,7 @@ string obtenerTermino(ifstream& tIdxIn, ifstream& tListaIn, int registro) {
 }
 
 // Devuelve la posicion en el archivo de terminos completos donde puede llegar a estar la palabra buscada
-int busquedaBinariaTerminos(string query, int cantRegistros, ifstream& tIdxIn, ifstream& tListaIn) {
+int busquedaBinariaTerminos(string query, int cantRegistros, ifstream& tIdxIn, string listaTerminosCompletos) {
 	int der = cantRegistros - 1;
 	int izq = 0;
 	int medio;
@@ -80,7 +78,8 @@ int busquedaBinariaTerminos(string query, int cantRegistros, ifstream& tIdxIn, i
 	string palabra;
 	while(izq <= der && !encontrado) {
 		medio = (izq + der)/2;
-		palabra = obtenerTermino(tIdxIn,tListaIn,medio);
+		palabra = obtenerTermino(tIdxIn,listaTerminosCompletos,medio);
+		cout << palabra << endl;
 		res = query.compare(palabra);
 		// Encontro el termino
 		if(res == 0) {
@@ -111,10 +110,10 @@ int obtenerOffsetDocsTerminosCompletos(ifstream& tIdxIn, int registro) {
 
 
 //Devuelve el offset a documentos de la query o -1 si no lo encuentra. Setea el offset al siguiente pasado por parametro
-int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn, ifstream& tLexico, int* docOffsetSiguiente) {
+int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, string listaTerminosCompletos, ifstream& tLexico, int* docOffsetSiguiente) {
 
 
-	string terminoCompleto = obtenerTermino(tIdxIn,tListaIn,pos);
+	string terminoCompleto = obtenerTermino(tIdxIn,listaTerminosCompletos,pos);
 	int offLexico, offDocs;
 	int counter = 0;
 	bool encontrado = false;
@@ -146,12 +145,15 @@ int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, ifstream& tListaIn
 			tLexico.read((char*)&iguales,sizeof(iguales));
 			tLexico.read((char*)&distintos,sizeof(distintos));
 
-			char* caracteresDistintos = new char[distintos];
-			tLexico.read(caracteresDistintos,distintos);
+			char* caracteresDistintosAux = new char[distintos];
+			tLexico.read(caracteresDistintosAux,distintos);
 			tLexico.read((char*)&offDocs,sizeof(offDocs));
+			string caracteresDistintos = caracteresDistintosAux;
+			caracteresDistintos = caracteresDistintos.substr(0,distintos);
 
 			// Formo la palabra con los caracteres iguales del termino completo y los distintos extraidos del archivo de lexico
 			palabra = terminoCompleto.substr(0,iguales) + caracteresDistintos;
+			cout << palabra << endl;
 
 			counter++;
 
@@ -242,7 +244,7 @@ Termino* decodeDocRegister(string palabra, string docs) {
 		cout << "Posiciones:" << endl;
 		pos = 0;
 		// VA DELETE?????
-		list<int>* listaPosiciones = new list<int>;
+		vector<int>* listaPosiciones = new vector<int>;
 		for(int k = 0; k < cantPos; k++) {
 			pos+= Coder::decode(docs,&tam);
 			cout << pos << endl;
@@ -255,10 +257,10 @@ Termino* decodeDocRegister(string palabra, string docs) {
 	return termino;
 }
 
-void intersecar(list<int>* interseccion, list<int> docsAIntersecar) {
-	std::list<int>::const_iterator interseccionIt = interseccion->begin();
-	std::list<int>::const_iterator docsIt = docsAIntersecar.begin();
-	list<int> nuevaInterseccion;
+void intersecar(vector<int>* interseccion, vector<int> docsAIntersecar) {
+	std::vector<int>::const_iterator interseccionIt = interseccion->begin();
+	std::vector<int>::const_iterator docsIt = docsAIntersecar.begin();
+	vector<int> nuevaInterseccion;
 	while(interseccionIt != interseccion->end() && docsIt != docsAIntersecar.end()) {
 		if(*interseccionIt < *docsIt) {
 			++interseccionIt;
@@ -285,7 +287,20 @@ void consulta(string repo, string query) {
 	int cantRegistros = tIdxIn.tellg()/TAM_TERMINO_REG;
 	tIdxIn.seekg(0,tIdxIn.beg);
 
-	list<Termino*> terminos;
+	vector<Termino*> terminos;
+
+	//Me traigo la lista entera de terminos completos para busqueda binaria
+
+	tListaIn.seekg (0, tListaIn.end);
+	int length = tListaIn.tellg();
+	tListaIn.seekg (0, tListaIn.beg);
+
+	char * bufferListaTerminosCompletos = new char [length];
+
+	tListaIn.read (bufferListaTerminosCompletos,length);
+
+	string listaTerminosCompletos = bufferListaTerminosCompletos;
+
 
 	char* token = strtok((char*) query.c_str(), kSEPARADORES);
 	if (token != NULL)
@@ -295,11 +310,11 @@ void consulta(string repo, string query) {
 	while (token != NULL && !falla) {
 		if (!Utilidades::isNumber(token) && strlen(token) > 1) {
 
-			int pos = busquedaBinariaTerminos(token,cantRegistros,tIdxIn,tListaIn);
+			int pos = busquedaBinariaTerminos(token,cantRegistros,tIdxIn,listaTerminosCompletos);
 
 			//Tengo que traerme el registro de documentos
 			int docOffsetSiguiente;
-			int docOffset = busquedaEnBloque(token,pos, tIdxIn, tListaIn, tLexico, &docOffsetSiguiente);
+			int docOffset = busquedaEnBloque(token,pos, tIdxIn, listaTerminosCompletos, tLexico, &docOffsetSiguiente);
 
 			string docRegister;
 			if(docOffset >= 0){
@@ -312,6 +327,7 @@ void consulta(string repo, string query) {
 				docRegister = obtenerDocs(tDocs,docOffset,docOffsetSiguiente);
 				terminos.push_back(decodeDocRegister(token, docRegister));
 			} else {
+				cout << "Palabra: " << token << endl;
 				cout << "Consulta no encontrada" << endl;
 				falla = true;
 			}
@@ -325,41 +341,73 @@ void consulta(string repo, string query) {
 		posicion++;
 	}
 
+	if(!falla) {
+		//Normalizacion de posiciones e interseccion de documentos
+		vector<int> interseccionDocs;
+		vector<Termino*>::const_iterator it;
+		int counter = 0;
+		for (it = terminos.begin(); it != terminos.end(); ++it) {
+			if((*it)!=NULL) {
 
-	//Normalizacion de posiciones e interseccion de documentos
-	list<int> interseccionDocs;
-	list<Termino*>::const_iterator it;
-	int counter = 0;
-	for (it = terminos.begin(); it != terminos.end(); ++it) {
-		if((*it)!=NULL) {
-
-			if(interseccionDocs.empty()) {
-				interseccionDocs = (*it)->docs;
-			} else {
-				intersecar(&interseccionDocs,(*it)->docs);
-			}
-
-			list<int>* posicionesNormalizadas = new list<int>;
-			std::list<list<int> >::const_iterator positionListIt;
-			for (positionListIt = (*it)->listaPosiciones.begin(); positionListIt != (*it)->listaPosiciones.end(); ++positionListIt){
-				std::list<int>::const_iterator positionIt;
-				for(positionIt = positionListIt->begin(); positionIt != positionListIt->end() ; ++positionIt){
-					posicionesNormalizadas->push_back((*positionIt)-counter);
+				if(interseccionDocs.empty()) {
+					interseccionDocs = (*it)->docs;
+				} else {
+					intersecar(&interseccionDocs,(*it)->docs);
 				}
-				(*it)->listaPosicionesNormalizadas.push_back(*posicionesNormalizadas);
+
+				vector<int>* posicionesNormalizadas = new vector<int>;
+				std::vector<vector<int> >::const_iterator positionListIt;
+				for (positionListIt = (*it)->listaPosiciones.begin(); positionListIt != (*it)->listaPosiciones.end(); ++positionListIt){
+					std::vector<int>::const_iterator positionIt;
+					for(positionIt = positionListIt->begin(); positionIt != positionListIt->end() ; ++positionIt){
+						posicionesNormalizadas->push_back((*positionIt)-counter);
+					}
+					(*it)->listaPosicionesNormalizadas.push_back(*posicionesNormalizadas);
+				}
+			}
+			counter++;
+		}
+
+
+		vector<int>::const_iterator itInterseccion;
+		vector<Termino*>::const_iterator itTerminos;
+			bool salir;
+		int position;
+		vector<int> posicionesIntersecar;
+		for(itInterseccion = interseccionDocs.begin(); itInterseccion != interseccionDocs.end(); ++itInterseccion) {
+			cout << endl;
+			cout << "Posibles archivos: " << (*itInterseccion) << endl;
+			bool noHayMatch = false;
+			for (itTerminos = terminos.begin(); itTerminos != terminos.end() && !noHayMatch; ++itTerminos) {
+				cout << (*itTerminos)->palabra << endl;
+				vector<int>::const_iterator itDoc;
+				position = 0;
+				salir = false;
+				// Recorro documentos
+				for(itDoc = (*itTerminos)->docs.begin(); itDoc!=(*itTerminos)->docs.end() && !salir; ++itDoc) {
+					if(*itDoc == *itInterseccion) {
+						salir = true;
+					} else {
+						position++;
+					}
+				}
+				if(posicionesIntersecar.empty()) {
+					posicionesIntersecar = (*itTerminos)->listaPosicionesNormalizadas[position];
+				} else {
+					intersecar(&posicionesIntersecar,(*itTerminos)->listaPosicionesNormalizadas[position]);
+					if(posicionesIntersecar.empty()) {
+						noHayMatch = true;
+					}
+				}
+			}
+			if(!posicionesIntersecar.empty()) {
+				cout << "Match en el documento " << *itInterseccion << endl;
+			} else {
+				cout << "No hay match" << endl;
 			}
 		}
-		counter++;
 	}
-
-
-	list<int>::const_iterator itInterseccion;
-	for(itInterseccion = interseccionDocs.begin(); itInterseccion != interseccionDocs.end(); ++itInterseccion) {
-		cout << (*itInterseccion) << endl;
-	}
-
-
-
+	delete[] bufferListaTerminosCompletos;
 	tIdxIn.close();
 	tListaIn.close();
 	tLexico.close();
@@ -383,7 +431,8 @@ int main(int argc, char** argv) {
 		}*/
 	//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 	//	indexar(argv[2], argv[3]);
-//	indexar("probando","texto_prueba");
+	indexar("probando","prueba");
+	//OVERFLOW DE POSICIONES!!!!!!!!
 /*
 	} else if (instruccion == "q") {
 		// Consulta
@@ -409,7 +458,7 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-		consulta("probando","aula aullido aulla");
+		consulta("probando","exit andromache");
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;

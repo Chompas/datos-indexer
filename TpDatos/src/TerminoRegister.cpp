@@ -8,9 +8,10 @@
 #include "TerminoRegister.h"
 
 TerminoRegister::TerminoRegister() {
-	this->frecuencia = 0;
+	this->frecuencia = 1;
 	this->documento = 0;
-	this->posiciones = new list<int>();
+	this->posicion = 0;
+	this->listaPosiciones = new vector<int>();
 
 }
 
@@ -26,7 +27,10 @@ bool TerminoRegister::cmp(TerminoRegister i, TerminoRegister j) {
 	bool cmp = false;
 	if (i.getTermino() < j.getTermino()
 			|| (i.getTermino() == j.getTermino()
-					&& i.getDocumento() < j.getDocumento())) {
+					&& i.getDocumento() < j.getDocumento())
+			|| (i.getTermino() == j.getTermino()
+					&& i.getDocumento() == j.getDocumento()
+					&& i.getPosicion() < j.getPosicion())) {
 		cmp = true;
 	}
 	return cmp;

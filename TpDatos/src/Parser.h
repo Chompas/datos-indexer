@@ -30,9 +30,10 @@ private:
 	string repo_dir;
 	Parser();
 	void recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets);
-	void processFile(const char* path, short nro_doc, list<TerminoRegister>* terminos, int* memoriaUsada);
+	void processFile(const char* path, short nro_doc, vector<TerminoRegister>* terminos, int* memoriaUsada);
 	void guardarDocumento(string filepath, short nro_doc, ofstream &paths, ofstream &offsets, long* offset);
-	void guardarEnDisco(list<TerminoRegister> terminos);
+	void guardarEnDisco(vector<TerminoRegister> terminos);
+	vector<TerminoRegister> procesarTerminos(vector<TerminoRegister>* terminos);
 };
 
 #endif /* PARSER_H_ */

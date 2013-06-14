@@ -14,8 +14,8 @@ using namespace std;
 class ByteBuffer {
 public:
 	static ByteBuffer* getInstance();
-	void saveBytes(string data, string filepath);
-	void vaciar(string filepath);
+	void saveBytes(string data, ofstream& tDocs);
+	void vaciar(ofstream& tDocs);
 private:
 	ByteBuffer();
 	virtual ~ByteBuffer();

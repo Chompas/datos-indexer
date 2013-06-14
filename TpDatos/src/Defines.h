@@ -13,7 +13,7 @@
 #define kLEXICO			"lexico"
 #define kLISTATERMINOS	"terminosLista"
 
-#define kSEPARADORES " ,.;:~{}[]+-_=?¿!¡/@#$%&¬()<>€çÇ\t\n\"'±¹²³ºª·"
+#define kSEPARADORES " ,.;:~{}[]+-_=?¿!¡/@#$%&¬()<>€çÇ\r\t\n\"'±¹²³ºª·"
 
 #define kNFRONTCODING	5
 
