@@ -8,6 +8,7 @@
 #include "Coder.h"
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 Coder::Coder() {
 	// TODO Auto-generated constructor stub
@@ -56,18 +57,41 @@ string Coder::unarioCode(int x) {
 }
 
 string Coder::numberToBinary(int x) {
-	string code;
-	int q, r;
-	if(x == 0) return "0";
-	while (x > 1) {
-		q = x / 2;
-		r = x - q * 2;
-		code = toString(r) + code;
-		x = q;
-	}
-	code = "1" + code;
+	//VERSION 1 -> malisima
+//	string code;
+//	int q, r;
+//	if(x == 0) return "0";
+//	while (x > 1) {
+//		q = x / 2;
+//		r = x - q * 2;
+//		code = toString(r) + code;
+//		x = q;
+//	}
+//	code = "1" + code;
+//
+//	return code;
 
-	return code;
+	//VERSION 2 -> la buena
+	if(x == 0) return "0";
+	if(x == 1) return "1";
+	if(x % 2 == 0) {
+		return numberToBinary(x/2) + "0";
+	} else {
+		return numberToBinary(x/2) + "1";
+	}
+
+	//VERSION 3 -> la otra buena
+//	string result = "";
+//	do {
+//		if( (x & 1) == 0 ) {
+//			result+= "0";
+//		} else {
+//			result+="1";
+//		}
+//		x >>= 1;
+//	} while(x);
+//	reverse(result.begin(),result.end());
+//	return result;
 }
 
 string Coder::binaryPart(int x) {
@@ -88,15 +112,24 @@ string Coder::binaryPart(int x) {
 }
 
 int Coder::binaryToInt(string sBinary){
-	int pos = 0;
-	int num = 0;
-	for(int i = sBinary.length()-1; i>=0; i--){
-		if(sBinary[i]=='1'){
-			num = num + pow(2.0,pos);
-		}
-		pos++;
+	//VERSION 1
+//	int pos = 0;
+//	int num = 0;
+//	for(int i = sBinary.length()-1; i>=0; i--){
+//		if(sBinary[i]=='1'){
+//			num = num + pow(2.0,pos);
+//		}
+//		pos++;
+//	}
+//	return num;
+
+	//VERSION 2
+	int result = 0;
+	int pow = 1;
+	for(int i = sBinary.length() - 1; i>=0; --i, pow <<= 1) {
+		result+= (sBinary[i]-'0')*pow;
 	}
-	return num;
+	return result;
 
 }
 

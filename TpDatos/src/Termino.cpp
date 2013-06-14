@@ -43,9 +43,7 @@ void Termino::convertIntoDistances() {
 	std::vector<int>::const_iterator iterator;
 	int anterior = 0;
 	this->distDocs = "";
-	if(docs.size() > 1) {
-		cout << "HOLA" << endl;
-	}
+
 	// Le preconcatenamos la frecuencia de documentos en Delta
 	this->distDocs+=Coder::encode(docs.size());
 	for (iterator = docs.begin(); iterator != docs.end(); ++iterator) {
