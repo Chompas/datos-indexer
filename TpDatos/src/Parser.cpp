@@ -130,7 +130,6 @@ vector<TerminoRegister> Parser::procesarTerminos(vector<TerminoRegister>* termin
 	string termino = terminos->front().getTermino();
 	terminosFinal.push_back(terminos->front());
 	for(it = terminos->begin()+1; it != terminos->end(); ++it) {
-//		cout << termino + " vs " + it->getTermino() << endl;
 		//Si es un nuevo termino
 		if( it->getTermino().compare(termino) != 0) {
 			terminosFinal.push_back(*it);
@@ -143,14 +142,6 @@ vector<TerminoRegister> Parser::procesarTerminos(vector<TerminoRegister>* termin
 		}
 
 	}
-//	vector<TerminoRegister>::const_iterator itFinal;
-//	for(itFinal = terminosFinal.begin(); itFinal != terminosFinal.end(); ++itFinal) {
-//		vector<int>::const_iterator itPos;
-//		cout << "Termino: " << itFinal->getTermino() << endl;
-//		for(itPos = itFinal->getPosiciones()->begin(); itPos != itFinal->getPosiciones()->end(); ++itPos) {
-//			cout << *itPos << endl;
-//		}
-//	}
 	return terminosFinal;
 }
 
@@ -158,6 +149,8 @@ vector<TerminoRegister> Parser::procesarTerminos(vector<TerminoRegister>* termin
  * Recorre el directorio y procesa archivo por archivo del mismo
  */
 void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) {
+	time_t start = time(0);
+
 	ofstream docFile;
 	string filepath;
 	DIR *dp;
@@ -178,7 +171,7 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 	//Offset inicial: despues del header
 	long offset = sizeof(short)+dir.length();
 
-
+	double seconds_since_start;
 
 	while ((dirp = readdir(dp))) {
 		filepath = dir + "/" + dirp->d_name;
@@ -195,7 +188,12 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 		nro_doc++;
 		guardarDocumento(dirp->d_name,nro_doc,paths,offsets,&offset);
 		//TODO: comprobar si se lleno la memoria, de ser asi, bajo a disco
-		if (memoriaUsada >= MAX_MEM) {
+	//	if (memoriaUsada >= MAX_MEM) {
+		seconds_since_start = difftime( time(0), start);
+		cout << seconds_since_start/60 << endl;
+		cout << nro_doc << ") Procesando " + filepath << endl;
+		this->processFile(filepath.c_str(), nro_doc, &terminos, &memoriaUsada);
+
 			//Ordeno la lista de terminos
 			sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);
 
@@ -205,20 +203,171 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 			//imprimirArchivoParcial(terminos);
 			guardarEnDisco(terminosFinal);
 			terminos.clear();
-		}
-		cout << "Procesando " + filepath << endl;
-		this->processFile(filepath.c_str(), nro_doc, &terminos, &memoriaUsada);
+	//	}
+
 
 	}
 	// PARA EL ULTIMO
-	//Ordeno la lista de terminos
-	sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);
-
-	vector<TerminoRegister> terminosFinal = procesarTerminos(&terminos);
-	//imprimirArchivoParcial(terminos);
-	guardarEnDisco(terminosFinal);
+//	//Ordeno la lista de terminos
+//	sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);
+//
+//	vector<TerminoRegister> terminosFinal = procesarTerminos(&terminos);
+//	//imprimirArchivoParcial(terminos);
+//	guardarEnDisco(terminosFinal);
 
 	closedir(dp);
+}
+
+vector<Termino*> levantarIndice(ifstream& tIdxIn,ifstream& tListaIn,ifstream& tLexicoIn,ifstream& tDocsIn) {
+
+	vector<Termino*> terminos;
+	//Me traigo la lista entera de terminos completos para busqueda binaria
+
+	tListaIn.seekg (0, tListaIn.end);
+	int length = tListaIn.tellg();
+	tListaIn.seekg (0, tListaIn.beg);
+
+	if(length < 0) {
+		return terminos;
+	}
+
+	char * bufferListaTerminosCompletos = new char [length];
+
+	tListaIn.read (bufferListaTerminosCompletos,length);
+
+	string listaTerminosCompletos = bufferListaTerminosCompletos;
+
+	int offLexico,docOffset,docOffsetSiguiente,pos = 0;
+
+
+	tIdxIn.seekg (0, tIdxIn.end);
+	int largoIdx = tIdxIn.tellg();
+	tIdxIn.seekg (0, tIdxIn.beg);
+
+	int max_pos = largoIdx/14;// 14 por el largo de cada registro
+
+	while(pos<max_pos) {
+
+		//AGARRO TERMINO COMPLETO
+		//RECORRO BLOQUE DECODIFICANDO
+		//GUARDO EN EL VECTOR DE TERMINOS
+
+
+		string terminoCompleto = IndexManager::getInstance()->obtenerTermino(tIdxIn,listaTerminosCompletos,pos);
+		if(terminoCompleto.empty()) {
+			break; // TODO: MEJORAR TODO ESTOOOOOOO
+		}
+		//tIdxIn.seekg(pos*TAM_TERMINO_REG+6,tIdxIn.beg); // +6 porque me salteo los dos primeros campos
+		tIdxIn.read((char*)&offLexico,sizeof(offLexico));
+		//tLexicoIn.seekg(offLexico,tLexicoIn.beg);
+
+		//Tengo que traerme el registro de documentos
+		docOffset = IndexManager::getInstance()->busquedaEnBloque(terminoCompleto,pos, tIdxIn, listaTerminosCompletos, tLexicoIn, &docOffsetSiguiente);
+
+		string docRegister;
+		if(docOffset >= 0){
+			//Caso especial: que sea el ultimo
+			if(docOffsetSiguiente < 0){
+				tDocsIn.seekg (0, tDocsIn.end);
+				docOffsetSiguiente = tDocsIn.tellg()*8;//Final del archivo de documentos
+				tDocsIn.seekg (0, tDocsIn.beg);
+			}
+			docRegister = IndexManager::getInstance()->obtenerDocs(tDocsIn,docOffset,docOffsetSiguiente);
+			terminos.push_back(IndexManager::getInstance()->decodeDocRegister(terminoCompleto, docRegister));
+		}
+
+		unsigned short iguales, distintos;
+		string palabra;
+		tLexicoIn.seekg(offLexico,tLexicoIn.beg);
+		for(int i = 0; i < kNFRONTCODING -1 && !tLexicoIn.eof(); i++) {
+
+			tLexicoIn.read((char*)&iguales,sizeof(iguales));
+			tLexicoIn.read((char*)&distintos,sizeof(distintos));
+
+			char* caracteresDistintosAux = new char[distintos];
+			tLexicoIn.read(caracteresDistintosAux,distintos);
+			tLexicoIn.read((char*)&docOffset,sizeof(docOffset));
+			string caracteresDistintos = caracteresDistintosAux;
+			caracteresDistintos = caracteresDistintos.substr(0,distintos);
+
+			// Formo la palabra con los caracteres iguales del termino completo y los distintos extraidos del archivo de lexico
+			palabra = terminoCompleto.substr(0,iguales) + caracteresDistintos;
+			int offLexicoActual;
+			if(i == kNFRONTCODING -1) {
+				docOffsetSiguiente = IndexManager::getInstance()->obtenerOffsetDocsTerminosCompletos(tIdxIn,pos+1);
+			}else{
+				offLexicoActual = tLexicoIn.tellg();
+				tLexicoIn.read((char*)&iguales,sizeof(iguales));
+				tLexicoIn.read((char*)&distintos,sizeof(distintos));
+
+				char* caracteresDistintos = new char[distintos];
+				tLexicoIn.read(caracteresDistintos,distintos);
+				tLexicoIn.read((char*)&docOffsetSiguiente,sizeof(docOffsetSiguiente));
+				//Caso especial: que sea el ultimo
+				if(tLexicoIn.eof()){
+					 docOffsetSiguiente = -1;
+				}
+			}
+			if(docOffset >= 0){
+				//Caso especial: que sea el ultimo
+				if(docOffsetSiguiente < 0){
+					tDocsIn.seekg (0, tDocsIn.end);
+					docOffsetSiguiente = tDocsIn.tellg()*8;//Final del archivo de documentos
+					tDocsIn.seekg (0, tDocsIn.beg);
+				}
+				docRegister = IndexManager::getInstance()->obtenerDocs(tDocsIn,docOffset,docOffsetSiguiente);
+				terminos.push_back(IndexManager::getInstance()->decodeDocRegister(palabra, docRegister));
+			}
+			if(!tLexicoIn.eof()) {
+				tLexicoIn.seekg(offLexicoActual,tLexicoIn.beg);
+			}
+
+		}
+
+		pos++;
+	}
+
+	delete bufferListaTerminosCompletos;
+	return terminos;
+}
+
+void rellenar(vector<Termino*>* final, vector<Termino*> terminos, size_t pos) {
+	for(size_t i = pos ; i<terminos.size(); i++) {
+		final->push_back(terminos[i]);
+	}
+}
+
+vector<Termino*> merge(vector<Termino*> terminosActuales, vector<Termino*> terminosIndice) {
+	vector<Termino*> final;
+
+	size_t posActuales = 0, posIndice = 0;
+	int res;
+	Termino* nuevoTermino;
+
+	while(posActuales < terminosActuales.size() && posIndice < terminosIndice.size()) {
+		res = strcmp(terminosActuales[posActuales]->palabra.c_str(),terminosIndice[posIndice]->palabra.c_str());
+		if(res < 0) {
+			final.push_back(terminosActuales[posActuales]);
+			posActuales++;
+		}else if(res > 0) {
+			final.push_back(terminosIndice[posIndice]);
+			posIndice++;
+		} else {
+			nuevoTermino = terminosIndice[posIndice];
+			nuevoTermino->addPositionsForDoc(terminosActuales[posActuales]->docs[0],&(terminosActuales[posActuales]->listaPosiciones[0]));
+			final.push_back(nuevoTermino);
+			posActuales++;
+			posIndice++;
+		}
+	}
+
+	if(posActuales == terminosActuales.size()) {
+		rellenar(&final,terminosIndice,posIndice);
+	} else {
+		rellenar(&final,terminosActuales,posActuales);
+	}
+
+	return final;
 }
 
 void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
@@ -230,47 +379,68 @@ void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
 	cout << "************EN MEMORIA*******************" << endl;
 
 	Termino* termino;
-	termino = new Termino(*terminos.begin());
-
-	ofstream tIdx((repo_dir + "/terminosIdx").c_str(),ios::binary|ios::out);
-	ofstream tLista((repo_dir + "/terminosLista").c_str(),ios::binary|ios::out);
-	ofstream tLexico((repo_dir + "/lexico").c_str(),ios::binary|ios::out);
-	ofstream tDocs(( repo_dir + "/documentos").c_str(),ios::binary|ios::out);
+//	termino = new Termino(*terminos.begin());
+	vector<Termino*> terminosActuales;
 
 
 	for (iterator = terminos.begin(); iterator != terminos.end(); ++iterator) {
 
-		// TERMINO NUEVO
-		if(iterator->getTermino().compare(termino->palabra) != 0) {
-			// Proceso termino
+//		// TERMINO NUEVO
+//		if(iterator->getTermino().compare(termino->palabra) != 0) {
+		//Aca va un delete?
+		termino = new Termino(*iterator);
 
-			IndexManager::getInstance()->indexTerm(termino,tIdx,tLista,tLexico,tDocs);
+//		}
 
-			//Aca va un delete?
-			termino = new Termino(*iterator);
-		}
-
-		if(iterator->getTermino().compare("andromache") == 0) {
-			cout << iterator->getDocumento() << endl;
-		}
 		//Con el termino, proceso el numero de documento y las posiciones
 		termino->addPositionsForDoc(iterator->getDocumento(),iterator->getPosiciones());
+
+		// Proceso termino
+
+		//IndexManager::getInstance()->indexTerm(termino,tIdx,tLista,tLexico,tDocsOut);
+		terminosActuales.push_back(termino);
 
 
 	}
 
 	//PROCESAR ULTIMO
-	IndexManager::getInstance()->indexTerm(termino,tIdx,tLista,tLexico,tDocs);
+	//IndexManager::getInstance()->indexTerm(termino,tIdx,tLista,tLexicoOut,tDocsOut);
+
+
+	ifstream tIdxIn((repo_dir + "/terminosIdx").c_str(),ios::binary|ios::in);
+	ifstream tListaIn((repo_dir + "/terminosLista").c_str(),ios::binary|ios::in);
+	ifstream tLexicoIn((repo_dir + "/lexico").c_str(),ios::binary|ios::in);
+	ifstream tDocsIn(( repo_dir + "/documentos").c_str(),ios::binary|ios::in);
+
+	vector<Termino*> terminosFinales = merge(terminosActuales,levantarIndice(tIdxIn,tListaIn,tLexicoIn,tDocsIn));
+
+	tIdxIn.close();
+	tListaIn.close();
+	tLexicoIn.close();
+	tDocsIn.close();
+
+
+	ofstream tIdxOut((repo_dir + "/terminosIdx").c_str(),ios::binary|ios::out);
+	ofstream tListaOut((repo_dir + "/terminosLista").c_str(),ios::binary|ios::out);
+	ofstream tLexicoOut((repo_dir + "/lexico").c_str(),ios::binary|ios::out);
+	ofstream tDocsOut(( repo_dir + "/documentos").c_str(),ios::binary|ios::out);
+
+	vector<Termino*>::const_iterator it;
+	for(it = terminosFinales.begin(); it!=terminosFinales.end(); ++it) {
+		IndexManager::getInstance()->indexTerm(*it,tIdxOut,tListaOut,tLexicoOut,tDocsOut);
+	}
+
+
 	//VACIO EL BUFFER DE DOCUMENTOS
-	ByteBuffer::getInstance()->vaciar(tDocs);
+	ByteBuffer::getInstance()->vaciar(tDocsOut);
 	IndexManager::getInstance()->reset();
 
 	cout << "************GUARDADO EN DISCO*******************" << endl;
 
-	tIdx.close();
-	tLista.close();
-	tLexico.close();
-	tDocs.close();
+	tIdxOut.close();
+	tListaOut.close();
+	tLexicoOut.close();
+	tDocsOut.close();
 
 
 }

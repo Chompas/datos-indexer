@@ -20,7 +20,7 @@ TerminoRegister::~TerminoRegister() {
 }
 
 /*
- * Funcion de comparacion para ordenar primero por nombre y desupues por numero de documento
+ * Funcion de comparacion para ordenar primero por nombre, desupues por numero de documento, y despues por posicion
  */
 bool TerminoRegister::cmp(TerminoRegister i, TerminoRegister j) {
 
