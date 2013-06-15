@@ -38,11 +38,11 @@ public:
 		this->frecuencia++;
 	}
 
-	vector<int>* getPosiciones() const {
+	vector<long>* getPosiciones() const {
 		return listaPosiciones;
 	}
 
-	void addPosicionToList(int posicion) {
+	void addPosicionToList(long posicion) {
 		listaPosiciones->push_back(posicion);
 	}
 
@@ -53,11 +53,11 @@ public:
 	void setTermino(string termino) {
 		this->termino = termino;
 	}
-	int getPosicion() const {
+	long getPosicion() const {
 		return posicion;
 	}
 
-	void setPosicion(int posicion) {
+	void setPosicion(long posicion) {
 		listaPosiciones->push_back(posicion);
 		this->posicion = posicion;
 	}
@@ -70,8 +70,8 @@ private:
 	string termino;
 	int documento;
 	int frecuencia;
-	int posicion;
-	vector<int>* listaPosiciones;
+	long posicion;
+	vector<long>* listaPosiciones;
 };
 
 #endif /* TERMINOREGISTER_H_ */

@@ -79,7 +79,6 @@ int busquedaBinariaTerminos(string query, int cantRegistros, ifstream& tIdxIn, s
 	while(izq <= der && !encontrado) {
 		medio = (izq + der)/2;
 		palabra = obtenerTermino(tIdxIn,listaTerminosCompletos,medio);
-		cout << palabra << endl;
 		res = query.compare(palabra);
 		// Encontro el termino
 		if(res == 0) {
@@ -153,7 +152,7 @@ int busquedaEnBloque(string query, int pos, ifstream& tIdxIn, string listaTermin
 
 			// Formo la palabra con los caracteres iguales del termino completo y los distintos extraidos del archivo de lexico
 			palabra = terminoCompleto.substr(0,iguales) + caracteresDistintos;
-			cout << palabra << endl;
+		//	cout << palabra << endl;
 
 			counter++;
 
@@ -244,10 +243,10 @@ Termino* decodeDocRegister(string palabra, string docs) {
 		cout << "Posiciones:" << endl;
 		pos = 0;
 		// VA DELETE?????
-		vector<int>* listaPosiciones = new vector<int>;
+		vector<long>* listaPosiciones = new vector<long>;
 		for(int k = 0; k < cantPos; k++) {
 			pos+= Coder::decode(docs,&tam);
-			cout << pos << endl;
+			//cout << pos << endl;
 			listaPosiciones->push_back(pos);
 			docs = docs.substr(tam,docs.length()-tam);
 		}
@@ -262,6 +261,24 @@ void intersecar(vector<int>* interseccion, vector<int> docsAIntersecar) {
 	std::vector<int>::const_iterator docsIt = docsAIntersecar.begin();
 	vector<int> nuevaInterseccion;
 	while(interseccionIt != interseccion->end() && docsIt != docsAIntersecar.end()) {
+		if(*interseccionIt < *docsIt) {
+			++interseccionIt;
+		} else if(*interseccionIt > * docsIt){
+			++docsIt;
+		} else {
+			nuevaInterseccion.push_back(*interseccionIt);
+			++interseccionIt;
+			++docsIt;
+		}
+	}
+	*interseccion = nuevaInterseccion;
+}
+
+void intersecarPosiciones(vector<long>* interseccion, vector<long> posicionesAIntersecar) {
+	std::vector<long>::const_iterator interseccionIt = interseccion->begin();
+	std::vector<long>::const_iterator docsIt = posicionesAIntersecar.begin();
+	vector<long> nuevaInterseccion;
+	while(interseccionIt != interseccion->end() && docsIt != posicionesAIntersecar.end()) {
 		if(*interseccionIt < *docsIt) {
 			++interseccionIt;
 		} else if(*interseccionIt > * docsIt){
@@ -301,14 +318,13 @@ void consulta(string repo, string query) {
 
 	string listaTerminosCompletos = bufferListaTerminosCompletos;
 
-
 	char* token = strtok((char*) query.c_str(), kSEPARADORES);
 	if (token != NULL)
 		Utilidades::string_a_minusculas(token);
 	int posicion = 0;
 	bool falla = false;
 	while (token != NULL && !falla) {
-		if (!Utilidades::isNumber(token) && strlen(token) > 1) {
+		if (!Utilidades::isNumber(token) && strlen(token) > 1 && !Parser::getInstance()->isStopWord(token)) {//TODO: ESTA FEO PIDIENDOSELO AL PARSER: CAMBIAR
 
 			int pos = busquedaBinariaTerminos(token,cantRegistros,tIdxIn,listaTerminosCompletos);
 
@@ -355,10 +371,10 @@ void consulta(string repo, string query) {
 					intersecar(&interseccionDocs,(*it)->docs);
 				}
 
-				vector<int>* posicionesNormalizadas = new vector<int>;
-				std::vector<vector<int> >::const_iterator positionListIt;
+				vector<long>* posicionesNormalizadas = new vector<long>;
+				std::vector<vector<long> >::const_iterator positionListIt;
 				for (positionListIt = (*it)->listaPosiciones.begin(); positionListIt != (*it)->listaPosiciones.end(); ++positionListIt){
-					std::vector<int>::const_iterator positionIt;
+					std::vector<long>::const_iterator positionIt;
 					for(positionIt = positionListIt->begin(); positionIt != positionListIt->end() ; ++positionIt){
 						posicionesNormalizadas->push_back((*positionIt)-counter);
 					}
@@ -371,32 +387,34 @@ void consulta(string repo, string query) {
 
 		vector<int>::const_iterator itInterseccion;
 		vector<Termino*>::const_iterator itTerminos;
-			bool salir;
+		bool salir;
 		int position;
-		vector<int> posicionesIntersecar;
+		vector<long> posicionesIntersecar;
 		for(itInterseccion = interseccionDocs.begin(); itInterseccion != interseccionDocs.end(); ++itInterseccion) {
 			cout << endl;
 			cout << "Posibles archivos: " << (*itInterseccion) << endl;
 			bool noHayMatch = false;
 			for (itTerminos = terminos.begin(); itTerminos != terminos.end() && !noHayMatch; ++itTerminos) {
-				cout << (*itTerminos)->palabra << endl;
-				vector<int>::const_iterator itDoc;
-				position = 0;
-				salir = false;
-				// Recorro documentos
-				for(itDoc = (*itTerminos)->docs.begin(); itDoc!=(*itTerminos)->docs.end() && !salir; ++itDoc) {
-					if(*itDoc == *itInterseccion) {
-						salir = true;
-					} else {
-						position++;
+				if((*itTerminos)!=NULL) {
+					cout << (*itTerminos)->palabra << endl;
+					vector<int>::const_iterator itDoc;
+					position = 0;
+					salir = false;
+					// Recorro documentos
+					for(itDoc = (*itTerminos)->docs.begin(); itDoc!=(*itTerminos)->docs.end() && !salir; ++itDoc) {
+						if(*itDoc == *itInterseccion) {
+							salir = true;
+						} else {
+							position++;
+						}
 					}
-				}
-				if(posicionesIntersecar.empty()) {
-					posicionesIntersecar = (*itTerminos)->listaPosicionesNormalizadas[position];
-				} else {
-					intersecar(&posicionesIntersecar,(*itTerminos)->listaPosicionesNormalizadas[position]);
 					if(posicionesIntersecar.empty()) {
-						noHayMatch = true;
+						posicionesIntersecar = (*itTerminos)->listaPosicionesNormalizadas[position];
+					} else {
+						intersecarPosiciones(&posicionesIntersecar,(*itTerminos)->listaPosicionesNormalizadas[position]);
+						if(posicionesIntersecar.empty()) {
+							noHayMatch = true;
+						}
 					}
 				}
 			}
@@ -431,7 +449,7 @@ int main(int argc, char** argv) {
 		}*/
 	//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 	//	indexar(argv[2], argv[3]);
-	indexar("probando","prueba");
+//	indexar("probando","prueba");
 	//OVERFLOW DE POSICIONES!!!!!!!!
 /*
 	} else if (instruccion == "q") {
@@ -458,7 +476,7 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-		consulta("probando","exit andromache");
+		consulta("probando","hector");
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;

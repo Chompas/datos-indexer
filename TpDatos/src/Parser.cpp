@@ -19,6 +19,14 @@ Parser* Parser::instance = 0;
 
 Parser::Parser() {
 
+	//Cargo las stop words en memoria
+	ifstream sWords("stopwords.txt");
+	string stop_word;
+	while(sWords.good()) {
+		getline(sWords,stop_word,',');
+		stopWords.push_back(stop_word);
+	}
+
 }
 
 Parser* Parser::getInstance() {
@@ -29,7 +37,7 @@ Parser* Parser::getInstance() {
 }
 
 // Devuelve la posicion
-int busquedaBinaria(string texto, vector<TerminoRegister>* terminos) {
+int busquedaBinaria(string texto, vector<string>* terminos) {
 	int der = terminos->size() - 1;
 	int izq = 0;
 	int medio = -1;
@@ -38,7 +46,7 @@ int busquedaBinaria(string texto, vector<TerminoRegister>* terminos) {
 	string palabra;
 	while(izq <= der && !encontrado) {
 		medio = (izq + der)/2;
-		palabra = terminos->at(medio).getTermino();
+		palabra = terminos->at(medio);
 		res = texto.compare(palabra);
 		// Encontro el termino
 		if(res == 0) {
@@ -56,6 +64,11 @@ int busquedaBinaria(string texto, vector<TerminoRegister>* terminos) {
 	return medio;
 }
 
+bool Parser::isStopWord(char* word) {
+	int pos = busquedaBinaria(word,&stopWords);
+	return pos>=0;
+}
+
 /*
  * Recorre el archivo y va separando en tokens cada linea. Asigna los terminos al vector de terminos
  */
@@ -64,56 +77,16 @@ void Parser::processFile(const char* path, short nro_doc,
 	string line;
 	ifstream fin;
 	fin.open(path);
-	int posicion = 1;
+	long posicion = 1;
 	while (!fin.eof()) {
 
 		getline(fin, line);
 		char* token = strtok((char*) line.c_str(), kSEPARADORES);
-		if (token != NULL)
+		if (token != NULL) {
 			Utilidades::string_a_minusculas(token);
-		bool nuevo = true;
-		int pos;
+		}
 		while (token != NULL) {
-			if (!Utilidades::isNumber(token) && strlen(token) > 1) {
-				//Me fijo si el termino ya esta en el vector y en el documento
-				//TODO BUSQUEDA BINARIA
-/*				for (vector<TerminoRegister>::iterator it = terminos->begin(); it != terminos->end(); ++it) {
-					if (it->getTermino().compare(token) == 0 && it->getDocumento() == nro_doc) {
-						nuevo = false;
-						it->addFrecuencia();
-						it->addPosicion(posicion);
-					}
-				}
-				//cout << token << endl;
-//				pos = busquedaBinaria(token,terminos);
-//
-//				if(pos >= 0) {
-//					nuevo = false;
-//				}
-//				if(nuevo) {
-//					TerminoRegister termino;
-//					termino.setDocumento(nro_doc);
-//					termino.addFrecuencia();
-//					termino.setTermino(token);
-//					termino.addPosicion(posicion);
-//					terminos->push_back(termino);
-//					sort(terminos->begin(),terminos->end(),TerminoRegister::cmp);
-//					(*memoriaUsada)++;
-//				} else {
-//					if(terminos->at(pos).getDocumento() == nro_doc){
-//						terminos->at(pos).addFrecuencia();
-//						terminos->at(pos).addPosicion(posicion);
-//					}
-//				}
-				if (nuevo) {
-					TerminoRegister termino;
-					termino.setDocumento(nro_doc);
-					termino.addFrecuencia();
-					termino.setTermino(token);
-					termino.addPosicion(posicion);
-					terminos->push_back(termino);
-					(*memoriaUsada)++;
-				}*/
+			if (!Utilidades::isNumber(token) && strlen(token) > 1 && !isStopWord(token)) {
 
 				TerminoRegister termino;
 				termino.setDocumento(nro_doc);
@@ -125,10 +98,10 @@ void Parser::processFile(const char* path, short nro_doc,
 			//Tomo el siguiente token
 
 			token = strtok(NULL, kSEPARADORES);
-			if (token != NULL)
+			if (token != NULL) {
 				Utilidades::string_a_minusculas(token);
+			}
 			posicion++;
-			nuevo = true;
 		}
 	}
 	fin.close();
@@ -143,7 +116,7 @@ void imprimirArchivoParcial(vector<TerminoRegister> terminos) {
 
 		cout << it->getTermino() << " - " << it->getDocumento() << " - "
 				<< it->getFrecuencia() << " - ";
-		for (vector<int>::iterator pos = it->getPosiciones()->begin();
+		for (vector<long>::iterator pos = it->getPosiciones()->begin();
 				pos != it->getPosiciones()->end(); ++pos) {
 			cout << *pos << " ";
 		}

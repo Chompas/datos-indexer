@@ -25,6 +25,7 @@ class Parser {
 public:
 	static Parser* getInstance();
 	void parsearDirectorio(string dir, string repo_dir, ofstream &paths, ofstream &offsets);
+	bool isStopWord(char* word);
 private:
 	static Parser* instance;
 	string repo_dir;
@@ -34,6 +35,7 @@ private:
 	void guardarDocumento(string filepath, short nro_doc, ofstream &paths, ofstream &offsets, long* offset);
 	void guardarEnDisco(vector<TerminoRegister> terminos);
 	vector<TerminoRegister> procesarTerminos(vector<TerminoRegister>* terminos);
+	vector<string> stopWords;
 };
 
 #endif /* PARSER_H_ */

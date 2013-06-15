@@ -34,7 +34,7 @@ string Termino::toString(int number) {
 
 //PUBLIC
 
-void Termino::addPositionsForDoc(int doc, vector<int>* positions) {
+void Termino::addPositionsForDoc(int doc, vector<long>* positions) {
 	this->docs.push_back(doc);
 	this->listaPosiciones.push_back(*positions);
 }
@@ -57,10 +57,10 @@ void Termino::convertIntoDistances() {
 
 	}
 
-	std::vector<vector<int> >::const_iterator positionListIt;
+	std::vector<vector<long> >::const_iterator positionListIt;
 	anterior = 0;
 	for (positionListIt = listaPosiciones.begin(); positionListIt != listaPosiciones.end(); ++positionListIt){
-		std::vector<int>::const_iterator positionIt;
+		std::vector<long>::const_iterator positionIt;
 		string posDeltaAux = "";
 		// Le preconcatenamos la frecuencia de cantidad de posiciones a cada lista de posiciones en DELTA
 		posDeltaAux+= Coder::encode(positionListIt->size());

@@ -21,11 +21,11 @@ public:
 	virtual ~Termino();
 	string palabra;
 	vector<int> docs;
-	vector<vector<int> > listaPosiciones;
-	vector<vector<int> > listaPosicionesNormalizadas;
+	vector<vector<long> > listaPosiciones;
+	vector<vector<long> > listaPosicionesNormalizadas;
 	string distDocs;
 	vector<string> distPositions;
-	void addPositionsForDoc(int doc, vector<int>* positions);
+	void addPositionsForDoc(int doc, vector<long>* positions);
 	void convertIntoDistances();
 private:
 	string toString(int number);

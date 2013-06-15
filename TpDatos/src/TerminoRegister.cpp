@@ -11,7 +11,7 @@ TerminoRegister::TerminoRegister() {
 	this->frecuencia = 1;
 	this->documento = 0;
 	this->posicion = 0;
-	this->listaPosiciones = new vector<int>();
+	this->listaPosiciones = new vector<long>();
 
 }
 
