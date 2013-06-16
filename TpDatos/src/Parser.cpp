@@ -26,6 +26,7 @@ Parser::Parser() {
 		getline(sWords,stop_word,',');
 		stopWords.push_back(stop_word);
 	}
+	sWords.close();
 
 }
 
@@ -116,8 +117,8 @@ void imprimirArchivoParcial(vector<TerminoRegister> terminos) {
 
 		cout << it->getTermino() << " - " << it->getDocumento() << " - "
 				<< it->getFrecuencia() << " - ";
-		for (vector<long>::iterator pos = it->getPosiciones()->begin();
-				pos != it->getPosiciones()->end(); ++pos) {
+		for (vector<long>::iterator pos = it->getPosiciones().begin();
+				pos != it->getPosiciones().end(); ++pos) {
 			cout << *pos << " ";
 		}
 		cout << endl;
@@ -147,6 +148,7 @@ vector<TerminoRegister> Parser::procesarTerminos(vector<TerminoRegister>* termin
 
 typedef struct file {
 
+	string path;
 	string name;
 	int nro;
 	long size;
@@ -209,11 +211,10 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 
 		//Identificacion de los documentos a indexar: guarda y numera documentos
 		nro_doc++;
-		guardarDocumento(dirp->d_name,nro_doc,paths,offsets,&offset);
 
 		file_t file;
-		file.name = filepath;
-		file.nro = nro_doc;
+		file.path = filepath;
+		file.name = dirp->d_name;
 		file.size = fileSize(filepath);
 		files.push_back(file);
 	}
@@ -223,8 +224,10 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 	for(unsigned int i = 0; i< files.size(); i++) {
 		//TODO: comprobar si se lleno la memoria, de ser asi, bajo a disco
 	//	if (memoriaUsada >= MAX_MEM) {
-		cout << i+1 << ") Procesando " + files[i].name << " tam: " << files[i].size << endl;
-		this->processFile(files[i].name.c_str(), files[i].nro, &terminos, &memoriaUsada);
+		files[i].nro = i+1;
+		guardarDocumento(files[i].name,files[i].nro,paths,offsets,&offset);
+		cout << files[i].nro << ") Procesando " + files[i].name << " tam: " << files[i].size << endl;
+		this->processFile(files[i].path.c_str(), files[i].nro, &terminos, &memoriaUsada);
 
 		//Ordeno la lista de terminos
 		sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);
@@ -253,6 +256,8 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 }
 
 vector<Termino*> levantarIndice(ifstream& tIdxIn,ifstream& tListaIn,ifstream& tLexicoIn,ifstream& tDocsIn) {
+
+	cout << "************LEVANTANDO INDICE*******************" << endl;
 
 	vector<Termino*> terminos;
 	//Me traigo la lista entera de terminos completos para busqueda binaria
@@ -322,6 +327,7 @@ vector<Termino*> levantarIndice(ifstream& tIdxIn,ifstream& tListaIn,ifstream& tL
 			tLexicoIn.read(caracteresDistintosAux,distintos);
 			tLexicoIn.read((char*)&docOffset,sizeof(docOffset));
 			string caracteresDistintos = caracteresDistintosAux;
+			delete caracteresDistintosAux;
 			caracteresDistintos = caracteresDistintos.substr(0,distintos);
 
 			// Formo la palabra con los caracteres iguales del termino completo y los distintos extraidos del archivo de lexico
@@ -336,6 +342,7 @@ vector<Termino*> levantarIndice(ifstream& tIdxIn,ifstream& tListaIn,ifstream& tL
 
 				char* caracteresDistintos = new char[distintos];
 				tLexicoIn.read(caracteresDistintos,distintos);
+				delete caracteresDistintos;
 				tLexicoIn.read((char*)&docOffsetSiguiente,sizeof(docOffsetSiguiente));
 				//Caso especial: que sea el ultimo
 				if(tLexicoIn.eof()){
@@ -372,6 +379,9 @@ void rellenar(vector<Termino*>* final, vector<Termino*> terminos, size_t pos) {
 }
 
 vector<Termino*> merge(vector<Termino*> terminosActuales, vector<Termino*> terminosIndice) {
+
+	cout << "************MERGING*******************" << endl;
+
 	vector<Termino*> final;
 
 	size_t posActuales = 0, posIndice = 0;
@@ -388,7 +398,7 @@ vector<Termino*> merge(vector<Termino*> terminosActuales, vector<Termino*> termi
 			posIndice++;
 		} else {
 			nuevoTermino = terminosIndice[posIndice];
-			nuevoTermino->addPositionsForDoc(terminosActuales[posActuales]->docs[0],&(terminosActuales[posActuales]->listaPosiciones[0]));
+			nuevoTermino->addPositionsForDoc(terminosActuales[posActuales]->docs[0],terminosActuales[posActuales]->listaPosiciones[0]);
 			final.push_back(nuevoTermino);
 			posActuales++;
 			posIndice++;
@@ -409,8 +419,6 @@ void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
 	//ACA VA EL MERGE
 
 	std::vector<TerminoRegister>::const_iterator iterator;
-
-	cout << "************EN MEMORIA*******************" << endl;
 
 	Termino* termino;
 //	termino = new Termino(*terminos.begin());
@@ -437,6 +445,8 @@ void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
 
 	}
 
+	cout << "************TERMINOS ACTUALES EN MEMORIA*******************" << endl;
+
 	//PROCESAR ULTIMO
 	//IndexManager::getInstance()->indexTerm(termino,tIdx,tLista,tLexicoOut,tDocsOut);
 
@@ -445,6 +455,8 @@ void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
 	ifstream tListaIn((repo_dir + "/terminosLista").c_str(),ios::binary|ios::in);
 	ifstream tLexicoIn((repo_dir + "/lexico").c_str(),ios::binary|ios::in);
 	ifstream tDocsIn(( repo_dir + "/documentos").c_str(),ios::binary|ios::in);
+
+
 
 	vector<Termino*> terminosFinales = merge(terminosActuales,levantarIndice(tIdxIn,tListaIn,tLexicoIn,tDocsIn));
 
@@ -459,6 +471,8 @@ void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
 	ofstream tLexicoOut((repo_dir + "/lexico").c_str(),ios::binary|ios::out);
 	ofstream tDocsOut(( repo_dir + "/documentos").c_str(),ios::binary|ios::out);
 
+	cout << "************INDEXANDO Y GUARDANDO EN DISCO*******************" << endl;
+
 	vector<Termino*>::const_iterator it;
 	for(it = terminosFinales.begin(); it!=terminosFinales.end(); ++it) {
 		IndexManager::getInstance()->indexTerm(*it,tIdxOut,tListaOut,tLexicoOut,tDocsOut);
@@ -468,6 +482,9 @@ void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
 	//VACIO EL BUFFER DE DOCUMENTOS
 	ByteBuffer::getInstance()->vaciar(tDocsOut);
 	IndexManager::getInstance()->reset();
+
+	terminosActuales.clear();
+	terminosFinales.clear();
 
 	cout << "************GUARDADO EN DISCO*******************" << endl;
 

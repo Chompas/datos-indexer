@@ -38,12 +38,12 @@ public:
 		this->frecuencia++;
 	}
 
-	vector<long>* getPosiciones() const {
+	vector<long> getPosiciones() const {
 		return listaPosiciones;
 	}
 
 	void addPosicionToList(long posicion) {
-		listaPosiciones->push_back(posicion);
+		listaPosiciones.push_back(posicion);
 	}
 
 	string getTermino() const {
@@ -58,12 +58,12 @@ public:
 	}
 
 	void setPosicion(long posicion) {
-		listaPosiciones->push_back(posicion);
+		listaPosiciones.push_back(posicion);
 		this->posicion = posicion;
 	}
 
 	void inicializarPosiciones() {
-		listaPosiciones->push_back(this->posicion);
+		listaPosiciones.push_back(this->posicion);
 	}
 
 private:
@@ -71,7 +71,7 @@ private:
 	int documento;
 	int frecuencia;
 	long posicion;
-	vector<long>* listaPosiciones;
+	vector<long> listaPosiciones;
 };
 
 #endif /* TERMINOREGISTER_H_ */

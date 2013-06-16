@@ -11,7 +11,6 @@ TerminoRegister::TerminoRegister() {
 	this->frecuencia = 1;
 	this->documento = 0;
 	this->posicion = 0;
-	this->listaPosiciones = new vector<long>();
 
 }
 
@@ -24,14 +23,10 @@ TerminoRegister::~TerminoRegister() {
  */
 bool TerminoRegister::cmp(TerminoRegister i, TerminoRegister j) {
 
-	bool cmp = false;
-	if (i.getTermino() < j.getTermino()
-			|| (i.getTermino() == j.getTermino()
-					&& i.getDocumento() < j.getDocumento())
-			|| (i.getTermino() == j.getTermino()
-					&& i.getDocumento() == j.getDocumento()
-					&& i.getPosicion() < j.getPosicion())) {
-		cmp = true;
-	}
-	return cmp;
+	string iTermino = i.getTermino(), jTermino = j.getTermino();
+	int iDoc = i.getDocumento(), jDoc = j.getDocumento();
+	long iPos = i.getPosicion(), jPos = j.getPosicion();
+	return (iTermino < jTermino
+			|| (iTermino == jTermino && iDoc < jDoc)
+			|| (iTermino == jTermino && iDoc == jDoc && iPos < jPos));
 }

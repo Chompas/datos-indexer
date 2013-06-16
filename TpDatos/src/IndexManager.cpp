@@ -111,7 +111,8 @@ int IndexManager::busquedaEnBloque(string query, int pos, ifstream& tIdxIn, stri
 		tLexico.read((char*)&iguales,sizeof(iguales));
 		tLexico.read((char*)&distintos,sizeof(distintos));
 
-		char* caracteresDistintos = new char[distintos];
+		//char* caracteresDistintos = new char[distintos];
+		char caracteresDistintos[distintos];
 		tLexico.read(caracteresDistintos,distintos);
 		tLexico.read((char*)docOffsetSiguiente,sizeof(*docOffsetSiguiente));
 
@@ -121,7 +122,8 @@ int IndexManager::busquedaEnBloque(string query, int pos, ifstream& tIdxIn, stri
 			tLexico.read((char*)&iguales,sizeof(iguales));
 			tLexico.read((char*)&distintos,sizeof(distintos));
 
-			char* caracteresDistintosAux = new char[distintos];
+			//char* caracteresDistintosAux = new char[distintos];
+			char caracteresDistintosAux[distintos];
 			tLexico.read(caracteresDistintosAux,distintos);
 			tLexico.read((char*)&offDocs,sizeof(offDocs));
 			string caracteresDistintos = caracteresDistintosAux;
@@ -220,11 +222,11 @@ Termino* IndexManager::decodeDocRegister(string palabra, string docs) {
 //		cout << "Posiciones:" << endl;
 		pos = 0;
 		// VA DELETE?????
-		vector<long>* listaPosiciones = new vector<long>;
+		vector<long> listaPosiciones;
 		for(int k = 0; k < cantPos; k++) {
 			pos+= Coder::decode(docs,&tam);
 //			cout << pos << endl;
-			listaPosiciones->push_back(pos);
+			listaPosiciones.push_back(pos);
 			docs = docs.substr(tam,docs.length()-tam);
 		}
 		termino->addPositionsForDoc(listaDocumentos[j],listaPosiciones);

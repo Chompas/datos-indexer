@@ -151,6 +151,9 @@ void consulta(string repo, string query) {
 			counter++;
 		}
 
+		if(interseccionDocs.empty()) {
+			cout << "No hay match" << endl;
+		}
 
 		vector<int>::const_iterator itInterseccion;
 		vector<Termino*>::const_iterator itTerminos;
@@ -217,7 +220,7 @@ int main(int argc, char** argv) {
 		}*/
 	//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 	//	indexar(argv[2], argv[3]);
-	indexar("probando","books");
+//	indexar("probando","prueba");
 
 /*
 	} else if (instruccion == "q") {
@@ -244,7 +247,7 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-//		consulta("probando"," exit//////////andromache");
+//		consulta("probando"," Produced by Louise Hope, Dave Maddock and the Online");
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;

@@ -34,9 +34,9 @@ string Termino::toString(int number) {
 
 //PUBLIC
 
-void Termino::addPositionsForDoc(int doc, vector<long>* positions) {
+void Termino::addPositionsForDoc(int doc, vector<long> positions) {
 	this->docs.push_back(doc);
-	this->listaPosiciones.push_back(*positions);
+	this->listaPosiciones.push_back(positions);
 }
 
 void Termino::convertIntoDistances() {
