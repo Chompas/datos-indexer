@@ -244,7 +244,7 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-//		consulta("probando","");
+//		consulta("probando"," exit//////////andromache");
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;

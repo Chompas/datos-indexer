@@ -145,6 +145,27 @@ vector<TerminoRegister> Parser::procesarTerminos(vector<TerminoRegister>* termin
 	return terminosFinal;
 }
 
+typedef struct file {
+
+	string name;
+	int nro;
+	long size;
+
+}file_t;
+
+long fileSize(string filepath) {
+	ifstream in;
+	in.open(filepath.c_str(), ios::in | ios::binary);
+	in.seekg(0, std::ifstream::end);
+	long size = in.tellg();
+	in.close();
+	return size;
+}
+
+bool file_cmp(file_t f1, file_t f2) {
+	return f1.size < f2.size;
+}
+
 /*
  * Recorre el directorio y procesa archivo por archivo del mismo
  */
@@ -173,6 +194,8 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 
 	double seconds_since_start;
 
+	vector<file_t> files;
+
 	while ((dirp = readdir(dp))) {
 		filepath = dir + "/" + dirp->d_name;
 
@@ -187,26 +210,37 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 		//Identificacion de los documentos a indexar: guarda y numera documentos
 		nro_doc++;
 		guardarDocumento(dirp->d_name,nro_doc,paths,offsets,&offset);
+
+		file_t file;
+		file.name = filepath;
+		file.nro = nro_doc;
+		file.size = fileSize(filepath);
+		files.push_back(file);
+	}
+
+	sort(files.begin(),files.end(),file_cmp);
+
+	for(unsigned int i = 0; i< files.size(); i++) {
 		//TODO: comprobar si se lleno la memoria, de ser asi, bajo a disco
 	//	if (memoriaUsada >= MAX_MEM) {
+		cout << i+1 << ") Procesando " + files[i].name << " tam: " << files[i].size << endl;
+		this->processFile(files[i].name.c_str(), files[i].nro, &terminos, &memoriaUsada);
+
+		//Ordeno la lista de terminos
+		sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);
+
+		// TRAERME TERMINOS DE DISCO, JUNTARLOS CON LOS ACTUALES
+		vector<TerminoRegister> terminosFinal = procesarTerminos(&terminos);
+
+		//imprimirArchivoParcial(terminos);
+		guardarEnDisco(terminosFinal);
 		seconds_since_start = difftime( time(0), start);
 		cout << seconds_since_start/60 << endl;
-		cout << nro_doc << ") Procesando " + filepath << endl;
-		this->processFile(filepath.c_str(), nro_doc, &terminos, &memoriaUsada);
-
-			//Ordeno la lista de terminos
-			sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);
-
-			// TRAERME TERMINOS DE DISCO, JUNTARLOS CON LOS ACTUALES
-			vector<TerminoRegister> terminosFinal = procesarTerminos(&terminos);
-
-			//imprimirArchivoParcial(terminos);
-			guardarEnDisco(terminosFinal);
-			terminos.clear();
+		terminos.clear();
 	//	}
-
-
 	}
+
+
 	// PARA EL ULTIMO
 //	//Ordeno la lista de terminos
 //	sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);
