@@ -399,6 +399,7 @@ vector<Termino*> merge(vector<Termino*> terminosActuales, vector<Termino*> termi
 		} else {
 			nuevoTermino = terminosIndice[posIndice];
 			nuevoTermino->addPositionsForDoc(terminosActuales[posActuales]->docs[0],terminosActuales[posActuales]->listaPosiciones[0]);
+			delete terminosActuales[posActuales];
 			final.push_back(nuevoTermino);
 			posActuales++;
 			posIndice++;
@@ -482,6 +483,13 @@ void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
 	//VACIO EL BUFFER DE DOCUMENTOS
 	ByteBuffer::getInstance()->vaciar(tDocsOut);
 	IndexManager::getInstance()->reset();
+
+	vector<Termino*>::const_iterator itActuales;
+	vector<Termino*>::const_iterator itFinales;
+
+	for(itFinales = terminosFinales.begin(); itFinales!= terminosFinales.end(); ++itFinales) {
+		delete *itFinales;
+	}
 
 	terminosActuales.clear();
 	terminosFinales.clear();
