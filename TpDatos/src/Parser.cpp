@@ -126,8 +126,7 @@ void imprimirArchivoParcial(vector<TerminoRegister> terminos) {
 	}
 }
 
-vector<Termino*> Parser::procesarTerminos(ifstream& file) {
-	vector<Termino*> terminosFinal;
+void Parser::procesarTerminos(ifstream& file,ofstream& tIdxOut,ofstream& tListaOut,ofstream& tLexicoOut,ofstream& tDocsOut) {
 	TerminoRegister termino = FileManager::leerTermino(file);
 	Termino* nuevoTermino = new Termino(termino);
 	string palabra = termino.getTermino();
@@ -136,13 +135,13 @@ vector<Termino*> Parser::procesarTerminos(ifstream& file) {
 		termino = FileManager::leerTermino(file);
 		//Si es un nuevo termino
 		if( termino.getTermino().compare(palabra) != 0) {
-			terminosFinal.push_back(nuevoTermino);
+			IndexManager::getInstance()->indexTerm(nuevoTermino,tIdxOut,tListaOut,tLexicoOut,tDocsOut);
+			delete nuevoTermino;
 			nuevoTermino = new Termino(termino);
 			palabra = termino.getTermino();
 		}
 
 	}
-	return terminosFinal;
 }
 
 typedef struct file {
@@ -322,13 +321,34 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 
 	ifstream archivoFinal(tempFiles.front().path.c_str(),ios::in|ios::binary);
 
-	vector<Termino*> terminosFinal = procesarTerminos(archivoFinal);
+	ofstream tIdxOut((repo_dir + "/terminosIdx").c_str(),ios::binary|ios::out);
+	ofstream tListaOut((repo_dir + "/terminosLista").c_str(),ios::binary|ios::out);
+	ofstream tLexicoOut((repo_dir + "/lexico").c_str(),ios::binary|ios::out);
+	ofstream tDocsOut(( repo_dir + "/documentos").c_str(),ios::binary|ios::out);
+
+	cout << "************INDEXANDO Y GUARDANDO EN DISCO*******************" << endl;
+
+	procesarTerminos(archivoFinal,tIdxOut,tListaOut,tLexicoOut,tDocsOut);
+
+
+	//VACIO EL BUFFER DE DOCUMENTOS
+	ByteBuffer::getInstance()->vaciar(tDocsOut);
+	IndexManager::getInstance()->reset();
+
+	terminos.clear();
+
+	cout << "************GUARDADO EN DISCO*******************" << endl;
+
+	tIdxOut.close();
+	tListaOut.close();
+	tLexicoOut.close();
+	tDocsOut.close();
 
 	archivoFinal.close();
 	remove(tempFiles.front().path.c_str());
 
 
-	guardarEnDisco(terminosFinal);
+	//guardarEnDisco(terminosFinal);
 	seconds_since_start = difftime( time(0), start);
 	cout << seconds_since_start/60 << endl;
 	// PARA EL ULTIMO
@@ -536,7 +556,6 @@ void Parser::guardarEnDisco(vector<Termino*> terminos){
 	cout << "************INDEXANDO Y GUARDANDO EN DISCO*******************" << endl;
 
 	vector<Termino*>::const_iterator it;
-	Termino* t;
 	for(it = terminos.begin(); it!=terminos.end(); ++it) {
 		IndexManager::getInstance()->indexTerm(*it,tIdxOut,tListaOut,tLexicoOut,tDocsOut);
 		delete *it;

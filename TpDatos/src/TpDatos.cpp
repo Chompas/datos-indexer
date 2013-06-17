@@ -20,6 +20,8 @@ void indexar(string nombre, string dir) {
 
 	//TODO: almacenamiento de repositorio
 
+	mkdir(dir_repositorios.c_str(),S_IRWXU | S_IRWXG | S_IRWXO);
+
 	//Crea carpeta para repositorio
 	string repo_dir = dir_repositorios+"/"+nombre;
 	mkdir(repo_dir.c_str() , S_IRWXU | S_IRWXG | S_IRWXO);
@@ -243,6 +245,7 @@ void consulta(string repo, string query) {
 
 }
 
+
 int main(int argc, char** argv) {
 
 	/*if (argc < 2) {
@@ -286,7 +289,12 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-		consulta("probando","charles dickens");
+	string query = "﻿Most people start at our Web site which has the main PG search facility:       http://www.gutenberg.org  This Web site includes information about Project Gutenberg-tm, including how to make donations to the Project Gutenberg Literary Archive Foundation, how to help produce our new eBooks, and how to subscribe to our email newsletter to hear about new eBooks.";
+	time_t start = time(0);
+	double seconds_since_start;
+		consulta("probando",query);
+	seconds_since_start = difftime( time(0), start);
+	cout << seconds_since_start*1000 << endl;
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;
