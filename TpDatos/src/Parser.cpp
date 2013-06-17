@@ -21,7 +21,7 @@ Parser* Parser::instance = 0;
 Parser::Parser() {
 
 	//Cargo las stop words en memoria
-	ifstream sWords("stopwords.txt");
+	ifstream sWords("../stopwords.txt");
 	string stop_word;
 	while(sWords.good()) {
 		getline(sWords,stop_word,',');
@@ -220,7 +220,6 @@ file_t tempMerge(file_t f1, file_t f2, string filepath) {
  */
 void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) {
 	time_t start = time(0);
-
 	ofstream docFile;
 	string filepath;
 	DIR *dp;
@@ -274,7 +273,7 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 	//	if (memoriaUsada >= MAX_MEM) {
 		files[i].nro = i+1;
 		guardarDocumento(files[i].name,files[i].nro,paths,offsets,&offset);
-		cout << files[i].nro << ") Procesando " + files[i].name << " tam: " << files[i].size << endl;
+		cout << files[i].nro << ") Procesando " + files[i].name << endl;
 		this->processFile(files[i].path.c_str(), files[i].nro, &terminos, &memoriaUsada);
 
 		//Ordeno la lista de terminos
@@ -294,8 +293,6 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 
 		//imprimirArchivoParcial(terminos);
 		//guardarEnDisco(terminosFinal);
-		seconds_since_start = difftime( time(0), start);
-		cout << seconds_since_start/60 << endl;
 		terminos.clear();
 	//	}
 	}
@@ -349,8 +346,12 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 
 
 	//guardarEnDisco(terminosFinal);
-	seconds_since_start = difftime( time(0), start);
-	cout << seconds_since_start/60 << endl;
+
+
+//	seconds_since_start = difftime( time(0), start);
+//	cout << seconds_since_start/60 << endl;
+//
+
 	// PARA EL ULTIMO
 //	//Ordeno la lista de terminos
 //	sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);

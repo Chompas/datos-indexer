@@ -11,8 +11,8 @@
 using namespace std;
 
 // FALTA PONER ../ EN CADA UNO
-string dir_repositorios = "Repositorios";
-string file_repositorios = "Repositorios/repos.txt";
+string dir_repositorios = "../Repositorios";
+string file_repositorios = "../Repositorios/repos.txt";
 string file_paths = "/paths.txt";
 string file_off = "/off.txt";
 
@@ -96,10 +96,11 @@ string obtenerPathDocumento(int nro_doc, string repo) {
 
 void consulta(string repo, string query) {
 	// Abro todos los archivos
-	ifstream tIdxIn(("Repositorios/" + repo + "/terminosIdx").c_str(),ios::binary|ios::in);
-	ifstream tListaIn(("Repositorios/" + repo + "/terminosLista").c_str(),ios::binary|ios::in);
-	ifstream tLexico(("Repositorios/" + repo + "/lexico").c_str(),ios::binary|ios::in);
-	ifstream tDocs(("Repositorios/" + repo + "/documentos").c_str(),ios::binary|ios::in);
+	string dir_repo = dir_repositorios + "/";
+	ifstream tIdxIn((dir_repo + repo + "/terminosIdx").c_str(),ios::binary|ios::in);
+	ifstream tListaIn((dir_repo + repo + "/terminosLista").c_str(),ios::binary|ios::in);
+	ifstream tLexico((dir_repo + repo + "/lexico").c_str(),ios::binary|ios::in);
+	ifstream tDocs((dir_repo + repo + "/documentos").c_str(),ios::binary|ios::in);
 
 	// Calculo la cantidad total de registros
 	tIdxIn.seekg(0,tIdxIn.end);
@@ -248,7 +249,7 @@ void consulta(string repo, string query) {
 
 int main(int argc, char** argv) {
 
-	/*if (argc < 2) {
+	if (argc < 2) {
 		cout << "Pocos parámetros" << endl;
 		return 1;
 	}
@@ -259,12 +260,12 @@ int main(int argc, char** argv) {
 		if (argc != 4) {
 			cout << "No se puede indexar" << endl;
 			return 1;
-		}*/
+		}
 	//DESCOMENTAR ESTO Y COMENTAR EL OTRO
-	//	indexar(argv[2], argv[3]);
-//	indexar("probando","books");
+		indexar(argv[2], argv[3]);
+//	indexar("probando","prueba");
 
-/*
+
 	} else if (instruccion == "q") {
 		// Consulta
 		int c;
@@ -283,23 +284,23 @@ int main(int argc, char** argv) {
 				cout << "Instrucción inválida" << endl;
 				return 1;
 			default:
-	(			return 1;
+				return 1;
 			}
 		}
-*/
+
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
-		//consulta(r,q);
-	string query = "﻿Most people start at our Web site which has the main PG search facility:       http://www.gutenberg.org  This Web site includes information about Project Gutenberg-tm, including how to make donations to the Project Gutenberg Literary Archive Foundation, how to help produce our new eBooks, and how to subscribe to our email newsletter to hear about new eBooks.";
-	time_t start = time(0);
-	double seconds_since_start;
-		consulta("probando",query);
-	seconds_since_start = difftime( time(0), start);
-	cout << seconds_since_start*1000 << endl;
-//
-//	} else {
-//		cout << "Instrucción inválida" << endl;
-//		return 1;
-//	}
+		consulta(r,q);
+//	string query = "﻿Most people start at our Web site which has the main PG search facility:       http://www.gutenberg.org  This Web site includes information about Project Gutenberg-tm, including how to make donations to the Project Gutenberg Literary Archive Foundation, how to help produce our new eBooks, and how to subscribe to our email newsletter to hear about new eBooks.";
+//	time_t start = time(0);
+//	double seconds_since_start;
+//		consulta("probando","casa");
+//	seconds_since_start = difftime( time(0), start);
+//	cout << seconds_since_start*1000 << endl;
+
+	} else {
+		cout << "Instrucción inválida" << endl;
+		return 1;
+	}
 
 	return 0;
 }
