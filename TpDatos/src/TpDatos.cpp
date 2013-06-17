@@ -35,8 +35,8 @@ void indexar(string nombre, string dir) {
 	repos.close();
 
 	//Creo archivo de documentos
-	ofstream paths((repo_dir+file_paths).c_str(),ios::app | ios::binary);
-	ofstream offsets((repo_dir+file_off).c_str(),ios::app | ios::binary);
+	ofstream paths((repo_dir+file_paths).c_str(),ios::out | ios::binary);
+	ofstream offsets((repo_dir+file_off).c_str(),ios::out | ios::binary);
 
 	//Agrego el header de paths: numBytes + path raiz
 	short numBytesRaiz = dir.length();
@@ -53,6 +53,41 @@ void indexar(string nombre, string dir) {
 
 }
 
+string obtenerPathDocumento(int nro_doc, string repo) {
+	string repo_dir = dir_repositorios+"/"+repo;
+	ifstream paths((repo_dir+file_paths).c_str(),ios::in | ios::binary);
+	ifstream offsets((repo_dir+file_off).c_str(),ios::in | ios::binary);
+	string path;
+
+	//Formato de offsets: nroDoc (short) + offset a paths (long)
+
+	short nroOff;
+	long offsetAPaths;
+
+	offsets.seekg((nro_doc-1)* (sizeof(short)+sizeof(long)),offsets.beg);
+
+	offsets.read((char*)&nroOff,sizeof(nroOff));
+	offsets.read((char*)&offsetAPaths,sizeof(offsetAPaths));
+
+	//Formato de paths: nro (short) + #bytes(short) + path restante (variable)
+
+	short nroPaths;
+	short numBytes;
+
+	paths.seekg(offsetAPaths,paths.beg);
+
+	paths.read((char*)&nroPaths,sizeof(nroPaths));
+	paths.read((char*)&numBytes,sizeof(numBytes));
+	char pathAux[numBytes];
+	paths.read(pathAux,numBytes);
+	path = pathAux;
+	path = path.substr(0,numBytes);
+
+	paths.close();
+	offsets.close();
+
+	return path;
+}
 
 
 
@@ -157,17 +192,16 @@ void consulta(string repo, string query) {
 
 		vector<int>::const_iterator itInterseccion;
 		vector<Termino*>::const_iterator itTerminos;
-		bool salir;
+		bool salir, existeMatch = false;
 		int position;
 		vector<long> posicionesIntersecar;
 		for(itInterseccion = interseccionDocs.begin(); itInterseccion != interseccionDocs.end(); ++itInterseccion) {
-			cout << endl;
 			posicionesIntersecar.clear();
-			cout << "Posible archivo: " << (*itInterseccion) << endl;
+			//cout << "Posible archivo: " << (*itInterseccion) << endl;
 			bool noHayMatch = false;
 			for (itTerminos = terminos.begin(); itTerminos != terminos.end() && !noHayMatch; ++itTerminos) {
 				if((*itTerminos)!=NULL) {
-					cout << (*itTerminos)->palabra << endl;
+					//cout << (*itTerminos)->palabra << endl;
 					vector<int>::const_iterator itDoc;
 					position = 0;
 					salir = false;
@@ -190,10 +224,15 @@ void consulta(string repo, string query) {
 				}
 			}
 			if(!posicionesIntersecar.empty()) {
-				cout << "Match en el documento " << *itInterseccion << endl;
-			} else {
-				cout << "No hay match" << endl;
+				cout << "Match en el documento "<< *itInterseccion << ": " << obtenerPathDocumento(*itInterseccion,repo) << endl;
+				existeMatch = true;
 			}
+//			} else {
+//				cout << "No hay match" << endl;
+//			}
+		}
+		if(!existeMatch) {
+			cout << "No hay match" << endl;
 		}
 	}
 	delete[] bufferListaTerminosCompletos;
@@ -220,7 +259,7 @@ int main(int argc, char** argv) {
 		}*/
 	//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 	//	indexar(argv[2], argv[3]);
-	indexar("probando","books");
+//	indexar("probando","books");
 
 /*
 	} else if (instruccion == "q") {
@@ -247,7 +286,7 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-//		consulta("probando"," shakespeare");
+		consulta("probando","charles dickens");
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;

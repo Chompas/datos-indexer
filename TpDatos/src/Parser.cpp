@@ -539,18 +539,13 @@ void Parser::guardarEnDisco(vector<Termino*> terminos){
 	Termino* t;
 	for(it = terminos.begin(); it!=terminos.end(); ++it) {
 		IndexManager::getInstance()->indexTerm(*it,tIdxOut,tListaOut,tLexicoOut,tDocsOut);
+		delete *it;
 	}
 
 
 	//VACIO EL BUFFER DE DOCUMENTOS
 	ByteBuffer::getInstance()->vaciar(tDocsOut);
 	IndexManager::getInstance()->reset();
-
-	vector<Termino*>::const_iterator itActuales;
-
-	for(itActuales = terminos.begin(); itActuales!= terminos.end(); ++itActuales) {
-		delete *itActuales;
-	}
 
 	terminos.clear();
 
