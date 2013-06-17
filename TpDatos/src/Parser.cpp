@@ -12,6 +12,7 @@
 #include "ByteBuffer.h"
 #include "Defines.h"
 #include "Utilidades.h"
+#include "FileManager.h"
 
 int MAX_MEM = 1024;
 
@@ -125,21 +126,19 @@ void imprimirArchivoParcial(vector<TerminoRegister> terminos) {
 	}
 }
 
-vector<TerminoRegister> Parser::procesarTerminos(vector<TerminoRegister>* terminos) {
-	vector<TerminoRegister> terminosFinal;
-	vector<TerminoRegister>::const_iterator it;
-	string termino = terminos->front().getTermino();
-	terminosFinal.push_back(terminos->front());
-	for(it = terminos->begin()+1; it != terminos->end(); ++it) {
+vector<Termino*> Parser::procesarTerminos(ifstream& file) {
+	vector<Termino*> terminosFinal;
+	TerminoRegister termino = FileManager::leerTermino(file);
+	Termino* nuevoTermino = new Termino(termino);
+	string palabra = termino.getTermino();
+	while(!file.eof()) {
+		nuevoTermino->addPositionsForDoc(termino.getDocumento(),termino.getPosicion());
+		termino = FileManager::leerTermino(file);
 		//Si es un nuevo termino
-		if( it->getTermino().compare(termino) != 0) {
-			terminosFinal.push_back(*it);
-			termino = it->getTermino();
-		//Si el termino no es nuevo
-		} else {
-
-			terminosFinal.back().addFrecuencia();
-			terminosFinal.back().addPosicionToList(it->getPosicion());
+		if( termino.getTermino().compare(palabra) != 0) {
+			terminosFinal.push_back(nuevoTermino);
+			nuevoTermino = new Termino(termino);
+			palabra = termino.getTermino();
 		}
 
 	}
@@ -166,6 +165,55 @@ long fileSize(string filepath) {
 
 bool file_cmp(file_t f1, file_t f2) {
 	return f1.size < f2.size;
+}
+
+bool temp_file_cmp(file_t f1, file_t f2) {
+	return f1.size > f2.size;
+}
+
+file_t tempMerge(file_t f1, file_t f2, string filepath) {
+	ifstream f1In(f1.path.c_str(),ios::in|ios::binary);
+	ifstream f2In(f2.path.c_str(),ios::in|ios::binary);
+
+	TerminoRegister termino1 = FileManager::leerTermino(f1In);
+	TerminoRegister termino2 = FileManager::leerTermino(f2In);
+
+	ofstream newFile(filepath.c_str(),ios::out|ios::binary);
+	bool res;
+
+	while(!f1In.eof() && !f2In.eof()) {
+		res = TerminoRegister::cmp(termino1,termino2);
+		if(res) {
+			FileManager::guardarStreamTemporal(termino1,newFile);
+			termino1 = FileManager::leerTermino(f1In);
+		} else {
+			FileManager::guardarStreamTemporal(termino2,newFile);
+			termino2 = FileManager::leerTermino(f2In);
+		}
+	}
+
+	if(f1In.eof()) {
+		while(!f2In.eof()) {
+			FileManager::guardarStreamTemporal(termino2,newFile);
+			termino2 = FileManager::leerTermino(f2In);
+		}
+	} else {
+		while(!f1In.eof()) {
+			FileManager::guardarStreamTemporal(termino1,newFile);
+			termino1 = FileManager::leerTermino(f1In);
+		}
+	}
+
+	f1In.close();
+	f2In.close();
+	newFile.close();
+
+	file_t newTemp;
+	newTemp.path = filepath;
+	newTemp.size = fileSize(filepath);
+
+	return newTemp;
+
 }
 
 /*
@@ -197,6 +245,7 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 	double seconds_since_start;
 
 	vector<file_t> files;
+	vector<file_t> tempFiles;
 
 	while ((dirp = readdir(dp))) {
 		filepath = dir + "/" + dirp->d_name;
@@ -233,17 +282,55 @@ void Parser::recorrerDirectorio(string dir, ofstream &paths, ofstream &offsets) 
 		sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);
 
 		// TRAERME TERMINOS DE DISCO, JUNTARLOS CON LOS ACTUALES
-		vector<TerminoRegister> terminosFinal = procesarTerminos(&terminos);
+		//vector<TerminoRegister> terminosFinal = procesarTerminos(&terminos);
+
+		FileManager::guardarArchivoTemporal(terminos,repo_dir,i);
+		file_t temp;
+		temp.name = Utilidades::toString(i);
+		temp.nro = i;
+		temp.path = repo_dir + "/" + temp.name;
+		temp.size = fileSize(temp.path);
+
+		tempFiles.push_back(temp);
 
 		//imprimirArchivoParcial(terminos);
-		guardarEnDisco(terminosFinal);
+		//guardarEnDisco(terminosFinal);
 		seconds_since_start = difftime( time(0), start);
 		cout << seconds_since_start/60 << endl;
 		terminos.clear();
 	//	}
 	}
 
+	file_t temp1;
+	file_t temp2;
 
+	int counter = tempFiles.size();
+
+	while(tempFiles.size() > 1) {
+		sort(tempFiles.begin(),tempFiles.end(),temp_file_cmp);
+		temp1 = tempFiles.back();
+		tempFiles.pop_back();
+		temp2 = tempFiles.back();
+		tempFiles.pop_back();
+		cout << "**********MERGING "+ temp1.path + " - " + temp2.path + " en " << counter << " ********************"<< endl;
+		tempFiles.push_back(tempMerge(temp1,temp2,repo_dir + "/" + Utilidades::toString(counter)));
+//		cout << " FIN DE MERGE" << endl;
+		remove(temp1.path.c_str());
+		remove(temp2.path.c_str());
+		counter++;
+	}
+
+	ifstream archivoFinal(tempFiles.front().path.c_str(),ios::in|ios::binary);
+
+	vector<Termino*> terminosFinal = procesarTerminos(archivoFinal);
+
+	archivoFinal.close();
+	remove(tempFiles.front().path.c_str());
+
+
+	guardarEnDisco(terminosFinal);
+	seconds_since_start = difftime( time(0), start);
+	cout << seconds_since_start/60 << endl;
 	// PARA EL ULTIMO
 //	//Ordeno la lista de terminos
 //	sort(terminos.begin(),terminos.end(),TerminoRegister::cmp);
@@ -398,7 +485,7 @@ vector<Termino*> merge(vector<Termino*> terminosActuales, vector<Termino*> termi
 			posIndice++;
 		} else {
 			nuevoTermino = terminosIndice[posIndice];
-			nuevoTermino->addPositionsForDoc(terminosActuales[posActuales]->docs[0],terminosActuales[posActuales]->listaPosiciones[0]);
+			//nuevoTermino->addPositionsForDoc(terminosActuales[posActuales]->docs[0],terminosActuales[posActuales]->listaPosiciones[0]);
 			delete terminosActuales[posActuales];
 			final.push_back(nuevoTermino);
 			posActuales++;
@@ -415,36 +502,10 @@ vector<Termino*> merge(vector<Termino*> terminosActuales, vector<Termino*> termi
 	return final;
 }
 
-void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
+void Parser::guardarEnDisco(vector<Termino*> terminos){
 
 	//ACA VA EL MERGE
 
-	std::vector<TerminoRegister>::const_iterator iterator;
-
-	Termino* termino;
-//	termino = new Termino(*terminos.begin());
-	vector<Termino*> terminosActuales;
-
-
-	for (iterator = terminos.begin(); iterator != terminos.end(); ++iterator) {
-
-//		// TERMINO NUEVO
-//		if(iterator->getTermino().compare(termino->palabra) != 0) {
-		//Aca va un delete?
-		termino = new Termino(*iterator);
-
-//		}
-
-		//Con el termino, proceso el numero de documento y las posiciones
-		termino->addPositionsForDoc(iterator->getDocumento(),iterator->getPosiciones());
-
-		// Proceso termino
-
-		//IndexManager::getInstance()->indexTerm(termino,tIdx,tLista,tLexico,tDocsOut);
-		terminosActuales.push_back(termino);
-
-
-	}
 
 	cout << "************TERMINOS ACTUALES EN MEMORIA*******************" << endl;
 
@@ -452,19 +513,19 @@ void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
 	//IndexManager::getInstance()->indexTerm(termino,tIdx,tLista,tLexicoOut,tDocsOut);
 
 
-	ifstream tIdxIn((repo_dir + "/terminosIdx").c_str(),ios::binary|ios::in);
-	ifstream tListaIn((repo_dir + "/terminosLista").c_str(),ios::binary|ios::in);
-	ifstream tLexicoIn((repo_dir + "/lexico").c_str(),ios::binary|ios::in);
-	ifstream tDocsIn(( repo_dir + "/documentos").c_str(),ios::binary|ios::in);
-
-
-
-	vector<Termino*> terminosFinales = merge(terminosActuales,levantarIndice(tIdxIn,tListaIn,tLexicoIn,tDocsIn));
-
-	tIdxIn.close();
-	tListaIn.close();
-	tLexicoIn.close();
-	tDocsIn.close();
+//	ifstream tIdxIn((repo_dir + "/terminosIdx").c_str(),ios::binary|ios::in);
+//	ifstream tListaIn((repo_dir + "/terminosLista").c_str(),ios::binary|ios::in);
+//	ifstream tLexicoIn((repo_dir + "/lexico").c_str(),ios::binary|ios::in);
+//	ifstream tDocsIn(( repo_dir + "/documentos").c_str(),ios::binary|ios::in);
+//
+//
+//
+//	//vector<Termino*> terminosFinales = merge(terminosActuales,levantarIndice(tIdxIn,tListaIn,tLexicoIn,tDocsIn));
+//
+//	tIdxIn.close();
+//	tListaIn.close();
+//	tLexicoIn.close();
+//	tDocsIn.close();
 
 
 	ofstream tIdxOut((repo_dir + "/terminosIdx").c_str(),ios::binary|ios::out);
@@ -475,7 +536,8 @@ void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
 	cout << "************INDEXANDO Y GUARDANDO EN DISCO*******************" << endl;
 
 	vector<Termino*>::const_iterator it;
-	for(it = terminosFinales.begin(); it!=terminosFinales.end(); ++it) {
+	Termino* t;
+	for(it = terminos.begin(); it!=terminos.end(); ++it) {
 		IndexManager::getInstance()->indexTerm(*it,tIdxOut,tListaOut,tLexicoOut,tDocsOut);
 	}
 
@@ -485,14 +547,12 @@ void Parser::guardarEnDisco(vector<TerminoRegister> terminos){
 	IndexManager::getInstance()->reset();
 
 	vector<Termino*>::const_iterator itActuales;
-	vector<Termino*>::const_iterator itFinales;
 
-	for(itFinales = terminosFinales.begin(); itFinales!= terminosFinales.end(); ++itFinales) {
-		delete *itFinales;
+	for(itActuales = terminos.begin(); itActuales!= terminos.end(); ++itActuales) {
+		delete *itActuales;
 	}
 
-	terminosActuales.clear();
-	terminosFinales.clear();
+	terminos.clear();
 
 	cout << "************GUARDADO EN DISCO*******************" << endl;
 

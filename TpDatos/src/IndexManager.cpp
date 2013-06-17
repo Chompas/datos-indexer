@@ -335,8 +335,6 @@ void IndexManager::saveLexico(Termino* termino, ofstream& tLexico) {
 void IndexManager::indexTerm(Termino* termino, ofstream& tIdx,ofstream& tLista,ofstream& tLexico,ofstream& tDocs) {
 	//Pasar docs y posiciones a distancias
 
-
-
 	termino->convertIntoDistances();
 
 	//Guardar el termino en disco

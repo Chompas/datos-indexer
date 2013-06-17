@@ -34,6 +34,24 @@ string Termino::toString(int number) {
 
 //PUBLIC
 
+void Termino::addPositionsForDoc(int doc, long position) {
+	if(this->docs.size() == 0){
+		this->docs.push_back(doc);
+		vector<long> positions;
+		positions.push_back(position);
+		this->listaPosiciones.push_back(positions);
+	}else if(this->docs.back() < doc) {
+
+		this->docs.push_back(doc);
+		vector<long> positions;
+		positions.push_back(position);
+		this->listaPosiciones.push_back(positions);
+
+	} else {
+		this->listaPosiciones.back().push_back(position);
+	}
+}
+
 void Termino::addPositionsForDoc(int doc, vector<long> positions) {
 	this->docs.push_back(doc);
 	this->listaPosiciones.push_back(positions);

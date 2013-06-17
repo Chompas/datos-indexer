@@ -6,6 +6,7 @@
  */
 
 #include "Utilidades.h"
+#include <sstream>
 
 Utilidades::Utilidades() {
 	// TODO Auto-generated constructor stub
@@ -26,4 +27,10 @@ void Utilidades::string_a_minusculas(char* string) {
 	for (int i = 0; string[i] != '\0'; i++) {
 		string[i] = (char) tolower(string[i]);
 	}
+}
+
+string Utilidades::toString(int number) {
+	stringstream ss; //create a stringstream
+	ss << number; //add number to the stream
+	return ss.str(); //return a string with the contents of the stream
 }

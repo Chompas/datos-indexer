@@ -220,7 +220,7 @@ int main(int argc, char** argv) {
 		}*/
 	//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 	//	indexar(argv[2], argv[3]);
-//	indexar("probando","books");
+	indexar("probando","books");
 
 /*
 	} else if (instruccion == "q") {
@@ -247,7 +247,7 @@ int main(int argc, char** argv) {
 */
 		//DESCOMENTAR ESTO Y COMENTAR EL OTRO
 		//consulta(r,q);
-		consulta("probando"," andromache");
+//		consulta("probando"," shakespeare");
 //
 //	} else {
 //		cout << "Instrucción inválida" << endl;

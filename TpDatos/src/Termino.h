@@ -25,6 +25,7 @@ public:
 	vector<vector<long> > listaPosicionesNormalizadas;
 	string distDocs;
 	vector<string> distPositions;
+	void addPositionsForDoc(int doc, long position);
 	void addPositionsForDoc(int doc, vector<long> positions);
 	void convertIntoDistances();
 private:

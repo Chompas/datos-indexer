@@ -8,6 +8,7 @@
 #ifndef FILEMANAGER_H_
 #define FILEMANAGER_H_
 
+#include "TerminoRegister.h"
 #include <string>
 using namespace std;
 
@@ -17,6 +18,9 @@ public:
 	virtual ~FileManager();
 	static int saveToFile(string buffer,ofstream& filestream);
 	static int saveToFile(void* buffer, int size, ofstream& filestream);
+	static void guardarArchivoTemporal(vector<TerminoRegister> terminos,string repo_dir, int i);
+	static TerminoRegister leerTermino(ifstream& in);
+	static void guardarStreamTemporal(TerminoRegister termino,ofstream& out);
 private:
 	static FileManager* instance;
 	FileManager();

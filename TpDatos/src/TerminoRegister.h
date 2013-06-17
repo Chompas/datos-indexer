@@ -18,6 +18,7 @@ using namespace std;
 class TerminoRegister {
 public:
 	TerminoRegister();
+	TerminoRegister(string termino,int doc,int pos);
 	virtual ~TerminoRegister();
 
 	static bool cmp(TerminoRegister i, TerminoRegister j);

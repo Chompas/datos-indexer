@@ -17,6 +17,7 @@ public:
 	virtual ~Utilidades();
 	static bool isNumber(string s);
 	static void string_a_minusculas(char* string);
+	static string toString(int number);
 };
 
 #endif /* UTILIDADES_H_ */
